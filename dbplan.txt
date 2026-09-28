@@ -1,0 +1,217 @@
+CREATE DATABASE IF NOT EXISTS incentive;
+USE incentive;
+
+-- =========================================================
+-- 1. STAFF DETAILS
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS staff_details (
+    sales_man_code VARCHAR(5) NOT NULL,
+    staff_name VARCHAR(100) NOT NULL,
+    outlet VARCHAR(100) NOT NULL,
+    role ENUM('staff', 'admin') NOT NULL DEFAULT 'staff',
+
+    PRIMARY KEY (sales_man_code)
+);
+
+
+-- =========================================================
+-- 2. INCENTIVES INFORMATION
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS Incentives_information (
+    promo_id INT(11) NOT NULL AUTO_INCREMENT,
+    promo VARCHAR(255) NOT NULL,
+    Rate DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+
+    type ENUM(
+        'individual',
+        'outlet_bundle'
+    ) NOT NULL DEFAULT 'individual',
+
+    start_date DATE NULL,
+    end_date DATE NULL,
+
+    status ENUM(
+        'Active',
+        'Upcoming',
+        'Expired'
+    ) NOT NULL DEFAULT 'Active',
+
+    PRIMARY KEY (promo_id)
+);
+
+
+-- =========================================================
+-- 3. BUNDLE INFORMATION
+-- =========================================================
+-- Only ONE row per promo_id.
+-- No bundle_id.
+-- No quantity.
+-- No status.
+-- No start/end date.
+
+CREATE TABLE IF NOT EXISTS Bundle_information (
+    promo_id INT(11) NOT NULL,
+
+    item_1 VARCHAR(255) NULL,
+    item_2 VARCHAR(255) NULL,
+    item_3 VARCHAR(255) NULL,
+    item_4 VARCHAR(255) NULL,
+    item_5 VARCHAR(255) NULL,
+
+    PRIMARY KEY (promo_id),
+
+    CONSTRAINT fk_bundle_promo
+        FOREIGN KEY (promo_id)
+        REFERENCES Incentives_information(promo_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+
+-- =========================================================
+-- 4. STAFF INCENTIVES
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS staff_incentives (
+    incentive_id INT(100) NOT NULL AUTO_INCREMENT,
+
+    SMC VARCHAR(5) NOT NULL,
+    promo_id INT(11) NOT NULL,
+
+    quantity INT NOT NULL DEFAULT 1,
+
+    status ENUM(
+        'approved',
+        'rejected',
+        'pending'
+    ) NOT NULL DEFAULT 'pending',
+
+    proof VARCHAR(500) NULL,
+
+    rejection_reason TEXT NULL,
+
+    submission_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (incentive_id),
+
+    CONSTRAINT fk_staff_incentives_smc
+        FOREIGN KEY (SMC)
+        REFERENCES staff_details(sales_man_code)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_staff_incentives_promo
+        FOREIGN KEY (promo_id)
+        REFERENCES Incentives_information(promo_id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
+);
+
+
+-- =========================================================
+-- INDEXES
+-- =========================================================
+
+CREATE INDEX idx_staff_incentives_smc
+ON staff_incentives(SMC);
+
+CREATE INDEX idx_staff_incentives_promo
+ON staff_incentives(promo_id);
+
+CREATE INDEX idx_staff_incentives_status
+ON staff_incentives(status);
+
+CREATE INDEX idx_staff_incentives_date
+ON staff_incentives(submission_date);
+
+CREATE INDEX idx_incentives_type
+ON Incentives_information(type);
+
+CREATE INDEX idx_incentives_status
+ON Incentives_information(status);
+
+CREATE INDEX idx_incentives_dates
+ON Incentives_information(start_date, end_date);
+
+
+-- =========================================================
+-- AUTOMATIC PROMOTION STATUS UPDATE
+-- =========================================================
+
+UPDATE Incentives_information
+SET status =
+    CASE
+        WHEN end_date IS NOT NULL
+             AND end_date < CURDATE()
+            THEN 'Expired'
+
+        WHEN start_date IS NOT NULL
+             AND start_date > CURDATE()
+            THEN 'Upcoming'
+
+        ELSE 'Active'
+    END;
+
+
+-- =========================================================
+-- OPTIONAL: TRIGGER TO KEEP PROMOTION STATUS UPDATED
+-- =========================================================
+-- This updates the status whenever a promotion is inserted
+-- or edited.
+
+DELIMITER $$
+
+DROP TRIGGER IF EXISTS trg_incentive_status_before_insert$$
+
+CREATE TRIGGER trg_incentive_status_before_insert
+BEFORE INSERT ON Incentives_information
+FOR EACH ROW
+BEGIN
+
+    IF NEW.start_date IS NOT NULL
+       AND NEW.start_date > CURDATE() THEN
+
+        SET NEW.status = 'Upcoming';
+
+    ELSEIF NEW.end_date IS NOT NULL
+       AND NEW.end_date < CURDATE() THEN
+
+        SET NEW.status = 'Expired';
+
+    ELSE
+
+        SET NEW.status = 'Active';
+
+    END IF;
+
+END$$
+
+
+DROP TRIGGER IF EXISTS trg_incentive_status_before_update$$
+
+CREATE TRIGGER trg_incentive_status_before_update
+BEFORE UPDATE ON Incentives_information
+FOR EACH ROW
+BEGIN
+
+    IF NEW.start_date IS NOT NULL
+       AND NEW.start_date > CURDATE() THEN
+
+        SET NEW.status = 'Upcoming';
+
+    ELSEIF NEW.end_date IS NOT NULL
+       AND NEW.end_date < CURDATE() THEN
+
+        SET NEW.status = 'Expired';
+
+    ELSE
+
+        SET NEW.status = 'Active';
+
+    END IF;
+
+END$$
+
+DELIMITER ;
