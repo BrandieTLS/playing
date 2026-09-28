@@ -1,0 +1,4447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Admin Portal - Incentive Management</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f5f6f8;
+            color: #111827;
+        }
+
+        button,
+        input,
+        select {
+            font-family: inherit;
+        }
+
+        .header {
+            background: #111827;
+            color: white;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left h1 {
+            margin: 0;
+            font-size: 22px;
+        }
+
+        .header-left p {
+            margin: 4px 0 0;
+            color: #d1d5db;
+            font-size: 13px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .admin-label {
+            font-size: 14px;
+            color: #e5e7eb;
+        }
+
+        .logout-btn {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 9px 16px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .logout-btn:hover {
+            background: #b91c1c;
+        }
+
+        .container {
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 22px;
+        }
+
+        .tab-btn {
+            border: none;
+            background: white;
+            color: #374151;
+            padding: 11px 17px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .tab-btn:hover {
+            background: #f3f4f6;
+        }
+
+        .tab-btn.active {
+            background: #111827;
+            color: white;
+        }
+
+        .tab {
+            display: none;
+        }
+
+        .tab.active {
+            display: block;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        .section-header h2 {
+            margin: 0;
+            font-size: 21px;
+        }
+
+        .section-header p {
+            margin: 5px 0 0;
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .month-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .month-control label {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input,
+        select {
+            border: 1px solid #d1d5db;
+            border-radius: 7px;
+            padding: 9px 10px;
+            background: white;
+            outline: none;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #2563eb;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(130px, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 11px;
+            padding: 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .stat-title {
+            color: #6b7280;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            margin-top: 8px;
+            font-size: 25px;
+            font-weight: 700;
+        }
+
+        .stat-sub {
+            margin-top: 4px;
+            color: #9ca3af;
+            font-size: 12px;
+        }
+
+        .card-blue {
+            border-top: 4px solid #2563eb;
+        }
+
+        .card-orange {
+            border-top: 4px solid #d97706;
+        }
+
+        .card-green {
+            border-top: 4px solid #16a34a;
+        }
+
+        .card-red {
+            border-top: 4px solid #dc2626;
+        }
+
+        .card-purple {
+            border-top: 4px solid #7c3aed;
+        }
+
+        .card-teal {
+            border-top: 4px solid #0f766e;
+        }
+
+        .card-gray {
+            border-top: 4px solid #6b7280;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 11px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin-bottom: 20px;
+        }
+
+        .panel-title {
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .filter-wide {
+            grid-column: span 2;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            border: none;
+            padding: 9px 14px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-success {
+            background: #16a34a;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #d97706;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-light {
+            background: #e5e7eb;
+            color: #111827;
+        }
+
+        .btn-small {
+            padding: 6px 9px;
+            font-size: 12px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 900px;
+        }
+
+        th,
+        td {
+            padding: 11px 10px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+            vertical-align: middle;
+            font-size: 13px;
+        }
+
+        th {
+            background: #f9fafb;
+            color: #374151;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .02em;
+        }
+
+        tr:hover td {
+            background: #fafafa;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .status-approved,
+        .status-active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-pending,
+        .status-upcoming {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-rejected,
+        .status-expired {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-default {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .type-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 5px;
+            background: #eef2ff;
+            color: #4338ca;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .type-bundle {
+            background: #ecfeff;
+            color: #155e75;
+        }
+
+        .money {
+            font-weight: 700;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 35px;
+            color: #9ca3af;
+        }
+
+        /* TOP 3 */
+
+        .top3-wrapper {
+            margin-top: 10px;
+        }
+
+        .podium-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            align-items: stretch;
+            margin-bottom: 25px;
+        }
+
+        .top-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 5px 18px rgba(0,0,0,0.08);
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+            border: 2px solid #e5e7eb;
+        }
+
+        .top-card.first {
+            border-color: #f59e0b;
+            transform: translateY(-8px);
+        }
+
+        .top-card.second {
+            border-color: #9ca3af;
+        }
+
+        .top-card.third {
+            border-color: #b45309;
+        }
+
+        .rank-circle {
+            width: 68px;
+            height: 68px;
+            margin: 0 auto 12px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f3f4f6;
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        .first .rank-circle {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .second .rank-circle {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .third .rank-circle {
+            background: #ffedd5;
+            color: #9a3412;
+        }
+
+        .place-label {
+            font-size: 13px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: #6b7280;
+            letter-spacing: .08em;
+        }
+
+        .top-name {
+            font-size: 21px;
+            font-weight: 800;
+            margin-top: 8px;
+        }
+
+        .top-meta {
+            color: #6b7280;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        .top-stat {
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 11px;
+            margin-top: 14px;
+            font-size: 13px;
+        }
+
+        .top-stat span:first-child {
+            color: #6b7280;
+        }
+
+        .top-stat span:last-child {
+            font-weight: 800;
+        }
+
+        .top-total {
+            margin-top: 18px;
+            padding: 14px;
+            background: #f9fafb;
+            border-radius: 9px;
+        }
+
+        .top-total-label {
+            font-size: 11px;
+            color: #6b7280;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .top-total-value {
+            margin-top: 4px;
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        .top-empty {
+            opacity: .6;
+        }
+
+        .breakdown-total td {
+            background: #f9fafb;
+            font-weight: 800;
+        }
+
+        .item-tags {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .item-tag {
+            background: #f3f4f6;
+            padding: 4px 7px;
+            border-radius: 5px;
+            font-size: 11px;
+        }
+
+        /* MODAL */
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(17,24,39,.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            width: min(850px, 100%);
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 15px 50px rgba(0,0,0,.25);
+        }
+
+        .modal-large {
+            width: min(1100px, 100%);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .close-btn {
+            border: none;
+            background: #f3f4f6;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #374151;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .detail-box {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .detail-label {
+            font-size: 11px;
+            color: #6b7280;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .detail-value {
+            margin-top: 5px;
+            font-weight: 600;
+        }
+
+        .proof-image {
+            max-width: 250px;
+            max-height: 250px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            object-fit: contain;
+        }
+
+        .message {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 2000;
+            padding: 13px 17px;
+            border-radius: 8px;
+            color: white;
+            display: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,.2);
+        }
+
+        .message.show {
+            display: block;
+        }
+
+        .message.success {
+            background: #16a34a;
+        }
+
+        .message.error {
+            background: #dc2626;
+        }
+
+        .message.info {
+            background: #2563eb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #6b7280;
+        }
+
+        .summary-total {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        .summary-total-card {
+            background: white;
+            padding: 16px 20px;
+            border-radius: 9px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.05);
+            min-width: 190px;
+        }
+
+        .summary-total-card span {
+            display: block;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .summary-total-card strong {
+            display: block;
+            font-size: 21px;
+            margin-top: 4px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .print-only {
+            display: none;
+        }
+
+        @media (max-width: 1200px) {
+            .cards {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .filters {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .podium-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .top-card.first {
+                transform: none;
+            }
+
+            .detail-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 700px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header {
+                padding: 13px 15px;
+            }
+
+            .header-right {
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 5px;
+            }
+
+            .cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .filters {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-wide {
+                grid-column: auto;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .header,
+            .tabs,
+            .filters,
+            .button-row,
+            .section-header button,
+            .month-control,
+            .action-column {
+                display: none !important;
+            }
+
+            .container {
+                max-width: none;
+                padding: 0;
+            }
+
+            .tab {
+                display: none !important;
+            }
+
+            #submissionsTab {
+                display: block !important;
+            }
+
+            .panel {
+                box-shadow: none;
+                border: none;
+            }
+
+            .print-only {
+                display: block;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="header">
+    <div class="header-left">
+        <h1>Incentive Management Portal</h1>
+        <p>Lite Mobile Admin Management</p>
+    </div>
+
+    <div class="header-right">
+        <span class="admin-label" id="adminName">Admin</span>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+</header>
+
+<div class="container">
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('dashboardTab', this)">
+            Dashboard
+        </button>
+
+        <button class="tab-btn" onclick="showTab('submissionsTab', this)">
+            Incentive Submissions
+        </button>
+
+        <button class="tab-btn" onclick="showTab('monthlyTab', this)">
+            Monthly Summary
+        </button>
+
+        <button class="tab-btn" onclick="showTab('top3Tab', this)">
+            Top 3
+        </button>
+
+        <button class="tab-btn" onclick="showTab('promotionsTab', this)">
+            Promotions
+        </button>
+
+        <button class="tab-btn" onclick="showTab('usersTab', this)">
+            Users / Add User
+        </button>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- DASHBOARD -->
+    <!-- ========================================================= -->
+
+    <section id="dashboardTab" class="tab active">
+
+        <div class="section-header">
+            <div>
+                <h2>Dashboard</h2>
+                <p>Overview for the selected month.</p>
+            </div>
+
+            <div class="month-control">
+                <label for="dashboardMonth">Month:</label>
+                <input type="month" id="dashboardMonth">
+            </div>
+        </div>
+
+        <div class="cards">
+
+            <div class="stat-card card-blue">
+                <div class="stat-title">Total Submissions</div>
+                <div class="stat-value" id="totalSubmissions">0</div>
+            </div>
+
+            <div class="stat-card card-orange">
+                <div class="stat-title">Pending</div>
+                <div class="stat-value" id="pendingSubmissions">0</div>
+            </div>
+
+            <div class="stat-card card-green">
+                <div class="stat-title">Approved</div>
+                <div class="stat-value" id="approvedSubmissions">0</div>
+            </div>
+
+            <div class="stat-card card-red">
+                <div class="stat-title">Rejected</div>
+                <div class="stat-value" id="rejectedSubmissions">0</div>
+            </div>
+
+            <div class="stat-card card-purple">
+                <div class="stat-title">Approved Individual</div>
+                <div class="stat-value" id="approvedIndividual">S$0.00</div>
+            </div>
+
+            <div class="stat-card card-teal">
+                <div class="stat-title">Outlet Bundle Pool</div>
+                <div class="stat-value" id="bundlePool">S$0.00</div>
+            </div>
+
+            <div class="stat-card card-gray">
+                <div class="stat-title">Staff Count</div>
+                <div class="stat-value" id="staffCount">0</div>
+            </div>
+
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">Recent Submissions</div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>SMC</th>
+                            <th>Staff</th>
+                            <th>Outlet</th>
+                            <th>Promotion</th>
+                            <th>Type</th>
+                            <th>Qty</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="dashboardRecentBody">
+                        <tr>
+                            <td colspan="10" class="loading">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </section>
+
+
+    <!-- ========================================================= -->
+    <!-- INCENTIVE SUBMISSIONS -->
+    <!-- ========================================================= -->
+
+    <section id="submissionsTab" class="tab">
+
+        <div class="section-header">
+            <div>
+                <h2>Incentive Submissions</h2>
+                <p>Review, approve, reject and edit incentive submissions.</p>
+            </div>
+
+            <div class="button-row">
+                <button class="btn btn-success" onclick="exportExcel()">
+                    Export Excel
+                </button>
+
+                <button class="btn btn-secondary" onclick="exportPDF()">
+                    Export PDF
+                </button>
+            </div>
+        </div>
+
+        <div class="panel">
+
+            <div class="filters">
+
+                <input
+                    type="text"
+                    id="filterSearch"
+                    class="filter-wide"
+                    placeholder="Search ID, staff, SMC, promotion..."
+                    oninput="applySubmissionFilters()"
+                >
+
+                <select id="filterStatus" onchange="applySubmissionFilters()">
+                    <option value="">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+
+                <select id="filterPromotion" onchange="applySubmissionFilters()">
+                    <option value="">All Promotions</option>
+                </select>
+
+                <select id="filterSMC" onchange="applySubmissionFilters()">
+                    <option value="">All SMC</option>
+                </select>
+
+                <select id="filterOutlet" onchange="applySubmissionFilters()">
+                    <option value="">All Outlets</option>
+                </select>
+
+                <input
+                    type="date"
+                    id="filterFrom"
+                    onchange="applySubmissionFilters()"
+                >
+
+                <input
+                    type="date"
+                    id="filterTo"
+                    onchange="applySubmissionFilters()"
+                >
+
+            </div>
+
+            <div class="button-row" style="margin-bottom:15px;">
+                <button class="btn btn-light" onclick="clearSubmissionFilters()">
+                    Clear Filters
+                </button>
+            </div>
+
+            <div class="table-wrapper">
+
+                <table id="submissionTable">
+
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>SMC</th>
+                            <th>Staff</th>
+                            <th>Outlet</th>
+                            <th>Promotion</th>
+                            <th>Type</th>
+                            <th>Rate</th>
+                            <th>Qty</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th class="action-column">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="submissionBody">
+                        <tr>
+                            <td colspan="12" class="loading">Loading...</td>
+                        </tr>
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ========================================================= -->
+    <!-- MONTHLY SUMMARY -->
+    <!-- ========================================================= -->
+
+    <section id="monthlyTab" class="tab">
+
+        <div class="section-header">
+
+            <div>
+                <h2>Monthly Summary</h2>
+                <p>Approved incentive summary for the selected month.</p>
+            </div>
+
+            <div class="month-control">
+                <label for="monthlyMonth">Month:</label>
+                <input
+                    type="month"
+                    id="monthlyMonth"
+                    onchange="changeMonth(this.value)"
+                >
+            </div>
+
+        </div>
+
+        <div class="summary-total">
+
+            <div class="summary-total-card">
+                <span>Total Individual Incentive</span>
+                <strong id="monthlyIndividualTotal">S$0.00</strong>
+            </div>
+
+            <div class="summary-total-card">
+                <span>Total Outlet Bundle Pool</span>
+                <strong id="monthlyBundleTotal">S$0.00</strong>
+            </div>
+
+            <div class="summary-total-card">
+                <span>Grand Total</span>
+                <strong id="monthlyGrandTotal">S$0.00</strong>
+            </div>
+
+        </div>
+
+        <div class="panel">
+
+            <div class="panel-title">
+                Individual Incentive Summary
+            </div>
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>SMC</th>
+                            <th>Staff Name</th>
+                            <th>Outlet</th>
+                            <th>Approved Quantity</th>
+                            <th>Individual Incentive</th>
+                            <th>Breakdown</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="individualSummaryBody">
+                        <tr>
+                            <td colspan="6" class="loading">Loading...</td>
+                        </tr>
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+        <div class="panel">
+
+            <div class="panel-title">
+                Outlet Bundle Summary
+            </div>
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>Outlet</th>
+                            <th>Bundle Quantity</th>
+                            <th>Bundle Incentive</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="bundleSummaryBody">
+                        <tr>
+                            <td colspan="3" class="loading">Loading...</td>
+                        </tr>
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ========================================================= -->
+    <!-- TOP 3 -->
+    <!-- ========================================================= -->
+
+    <section id="top3Tab" class="tab">
+
+        <div class="section-header">
+
+            <div>
+                <h2>Top 3</h2>
+                <p>
+                    Top 3 staff based on approved individual incentive.
+                    The outlet bundle pool is distributed 50% / 35% / 15%.
+                </p>
+            </div>
+
+            <div class="month-control">
+                <label for="top3Month">Month:</label>
+                <input
+                    type="month"
+                    id="top3Month"
+                    onchange="changeMonth(this.value)"
+                >
+            </div>
+
+        </div>
+
+
+        <!-- TOP 3 CARDS -->
+
+        <div class="top3-wrapper">
+
+            <div class="podium-grid">
+
+                <!-- FIRST -->
+
+                <div class="top-card first" id="topCard1">
+
+                    <div class="rank-circle">1</div>
+
+                    <div class="place-label">
+                        1st Place
+                    </div>
+
+                    <div class="top-name" id="top1Name">
+                        No Data
+                    </div>
+
+                    <div class="top-meta" id="top1Meta">
+                        —
+                    </div>
+
+                    <div class="top-stat">
+                        <span>Individual Incentive</span>
+                        <span id="top1Individual">S$0.00</span>
+                    </div>
+
+                    <div class="top-stat">
+                        <span>Bundle Share</span>
+                        <span id="top1Bundle">S$0.00</span>
+                    </div>
+
+                    <div class="top-total">
+                        <div class="top-total-label">
+                            Total Payout
+                        </div>
+
+                        <div class="top-total-value" id="top1Total">
+                            S$0.00
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <!-- SECOND -->
+
+                <div class="top-card second" id="topCard2">
+
+                    <div class="rank-circle">2</div>
+
+                    <div class="place-label">
+                        2nd Place
+                    </div>
+
+                    <div class="top-name" id="top2Name">
+                        No Data
+                    </div>
+
+                    <div class="top-meta" id="top2Meta">
+                        —
+                    </div>
+
+                    <div class="top-stat">
+                        <span>Individual Incentive</span>
+                        <span id="top2Individual">S$0.00</span>
+                    </div>
+
+                    <div class="top-stat">
+                        <span>Bundle Share</span>
+                        <span id="top2Bundle">S$0.00</span>
+                    </div>
+
+                    <div class="top-total">
+                        <div class="top-total-label">
+                            Total Payout
+                        </div>
+
+                        <div class="top-total-value" id="top2Total">
+                            S$0.00
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <!-- THIRD -->
+
+                <div class="top-card third" id="topCard3">
+
+                    <div class="rank-circle">3</div>
+
+                    <div class="place-label">
+                        3rd Place
+                    </div>
+
+                    <div class="top-name" id="top3Name">
+                        No Data
+                    </div>
+
+                    <div class="top-meta" id="top3Meta">
+                        —
+                    </div>
+
+                    <div class="top-stat">
+                        <span>Individual Incentive</span>
+                        <span id="top3Individual">S$0.00</span>
+                    </div>
+
+                    <div class="top-stat">
+                        <span>Bundle Share</span>
+                        <span id="top3Bundle">S$0.00</span>
+                    </div>
+
+                    <div class="top-total">
+                        <div class="top-total-label">
+                            Total Payout
+                        </div>
+
+                        <div class="top-total-value" id="top3Total">
+                            S$0.00
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- TOP 3 BREAKDOWN -->
+
+            <div class="panel">
+
+                <div class="panel-title">
+                    Top 3 Promotion Breakdown
+                </div>
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Staff</th>
+                                <th>SMC</th>
+                                <th>Promotion</th>
+                                <th>Type</th>
+                                <th>Rate</th>
+                                <th>Qty</th>
+                                <th>Incentive</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="top3BreakdownBody">
+                            <tr>
+                                <td colspan="8" class="loading">
+                                    Loading...
+                                </td>
+                            </tr>
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ========================================================= -->
+    <!-- PROMOTIONS -->
+    <!-- ========================================================= -->
+
+    <section id="promotionsTab" class="tab">
+
+        <div class="section-header">
+
+            <div>
+                <h2>Promotions</h2>
+                <p>Manage incentive promotions, dates, rates and bundle items.</p>
+            </div>
+
+            <button
+                class="btn btn-primary"
+                onclick="openPromotionModal()"
+            >
+                + Add Promotion
+            </button>
+
+        </div>
+
+        <div class="panel">
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>Promo ID</th>
+                            <th>Promotion</th>
+                            <th>Rate</th>
+                            <th>Type</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Status</th>
+                            <th>Items 1–5</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="promotionBody">
+                        <tr>
+                            <td colspan="9" class="loading">Loading...</td>
+                        </tr>
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ========================================================= -->
+    <!-- USERS -->
+    <!-- ========================================================= -->
+
+    <section id="usersTab" class="tab">
+
+        <div class="section-header">
+
+            <div>
+                <h2>Users</h2>
+                <p>Manage staff and administrator accounts.</p>
+            </div>
+
+            <button
+                class="btn btn-primary"
+                onclick="openUserModal()"
+            >
+                + Add User
+            </button>
+
+        </div>
+
+        <div class="panel">
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>SMC</th>
+                            <th>Outlet</th>
+                            <th>Role</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="usersBody">
+                        <tr>
+                            <td colspan="5" class="loading">Loading...</td>
+                        </tr>
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+<!-- ============================================================= -->
+<!-- SUBMISSION VIEW MODAL -->
+<!-- ============================================================= -->
+
+<div class="modal-overlay" id="submissionModal">
+
+    <div class="modal modal-large">
+
+        <div class="modal-header">
+
+            <h3>Submission Details</h3>
+
+            <button class="close-btn" onclick="closeModal('submissionModal')">
+                ×
+            </button>
+
+        </div>
+
+        <div id="submissionDetails"></div>
+
+        <div class="form-actions">
+
+            <button
+                class="btn btn-success"
+                id="approveSubmissionBtn"
+                onclick="approveCurrentSubmission()"
+            >
+                Approve
+            </button>
+
+            <button
+                class="btn btn-danger"
+                id="rejectSubmissionBtn"
+                onclick="rejectCurrentSubmission()"
+            >
+                Reject
+            </button>
+
+            <button
+                class="btn btn-warning"
+                id="editSubmissionBtn"
+                onclick="openSubmissionEdit()"
+            >
+                Edit Promotion
+            </button>
+
+            <button
+                class="btn btn-light"
+                onclick="closeModal('submissionModal')"
+            >
+                Close
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ============================================================= -->
+<!-- SUBMISSION EDIT MODAL -->
+<!-- ============================================================= -->
+
+<div class="modal-overlay" id="submissionEditModal">
+
+    <div class="modal">
+
+        <div class="modal-header">
+
+            <h3>Edit Submission Promotion</h3>
+
+            <button class="close-btn" onclick="closeModal('submissionEditModal')">
+                ×
+            </button>
+
+        </div>
+
+        <div class="form-grid">
+
+            <div class="form-group full">
+
+                <label>
+                    Promotion
+                </label>
+
+                <select id="editSubmissionPromo"></select>
+
+            </div>
+
+        </div>
+
+        <div class="form-actions">
+
+            <button
+                class="btn btn-primary"
+                onclick="saveSubmissionPromotion()"
+            >
+                Save
+            </button>
+
+            <button
+                class="btn btn-light"
+                onclick="closeModal('submissionEditModal')"
+            >
+                Cancel
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ============================================================= -->
+<!-- REJECT MODAL -->
+<!-- ============================================================= -->
+
+<div class="modal-overlay" id="rejectModal">
+
+    <div class="modal">
+
+        <div class="modal-header">
+
+            <h3>Reject Submission</h3>
+
+            <button class="close-btn" onclick="closeModal('rejectModal')">
+                ×
+            </button>
+
+        </div>
+
+        <div class="form-group">
+
+            <label>
+                Rejection Reason
+            </label>
+
+            <textarea
+                id="rejectionReason"
+                rows="5"
+                style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:7px;"
+                placeholder="Enter reason for rejection..."
+            ></textarea>
+
+        </div>
+
+        <div class="form-actions">
+
+            <button
+                class="btn btn-danger"
+                onclick="confirmReject()"
+            >
+                Reject Submission
+            </button>
+
+            <button
+                class="btn btn-light"
+                onclick="closeModal('rejectModal')"
+            >
+                Cancel
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ============================================================= -->
+<!-- PROMOTION MODAL -->
+<!-- ============================================================= -->
+
+<div class="modal-overlay" id="promotionModal">
+
+    <div class="modal">
+
+        <div class="modal-header">
+
+            <h3 id="promotionModalTitle">
+                Add Promotion
+            </h3>
+
+            <button class="close-btn" onclick="closeModal('promotionModal')">
+                ×
+            </button>
+
+        </div>
+
+        <div class="form-grid">
+
+            <div class="form-group full">
+
+                <label>
+                    Promotion Name
+                </label>
+
+                <input
+                    type="text"
+                    id="promoName"
+                    placeholder="Promotion name"
+                >
+
+            </div>
+
+            <div class="form-group">
+
+                <label>
+                    Rate
+                </label>
+
+                <input
+                    type="number"
+                    id="promoRate"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                >
+
+            </div>
+
+            <div class="form-group">
+
+                <label>
+                    Type
+                </label>
+
+                <select
+                    id="promoType"
+                    onchange="toggleBundleFields()"
+                >
+                    <option value="individual">
+                        Individual
+                    </option>
+
+                    <option value="outlet_bundle">
+                        Outlet Bundle
+                    </option>
+                </select>
+
+            </div>
+
+            <div class="form-group">
+
+                <label>
+                    Start Date
+                </label>
+
+                <input
+                    type="date"
+                    id="promoStartDate"
+                    onchange="updatePromotionStatusPreview()"
+                >
+
+            </div>
+
+            <div class="form-group">
+
+                <label>
+                    End Date
+                </label>
+
+                <input
+                    type="date"
+                    id="promoEndDate"
+                    onchange="updatePromotionStatusPreview()"
+                >
+
+            </div>
+
+            <div class="form-group">
+
+                <label>
+                    Status
+                </label>
+
+                <input
+                    type="text"
+                    id="promoStatus"
+                    readonly
+                >
+
+            </div>
+
+            <div
+                class="form-group full"
+                id="bundleItemsContainer"
+            >
+
+                <label>
+                    Bundle Items
+                </label>
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+                        <label>Item 1</label>
+                        <input type="text" id="item1">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Item 2</label>
+                        <input type="text" id="item2">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Item 3</label>
+                        <input type="text" id="item3">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Item 4</label>
+                        <input type="text" id="item4">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Item 5</label>
+                        <input type="text" id="item5">
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="form-actions">
+
+            <button
+                class="btn btn-primary"
+                onclick="savePromotion()"
+            >
+                Save Promotion
+            </button>
+
+            <button
+                class="btn btn-light"
+                onclick="closeModal('promotionModal')"
+            >
+                Cancel
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ============================================================= -->
+<!-- USER MODAL -->
+<!-- ============================================================= -->
+
+<div class="modal-overlay" id="userModal">
+
+    <div class="modal">
+
+        <div class="modal-header">
+
+            <h3>Add User</h3>
+
+            <button class="close-btn" onclick="closeModal('userModal')">
+                ×
+            </button>
+
+        </div>
+
+        <div class="form-grid">
+
+            <div class="form-group full">
+
+                <label>
+                    Staff Name
+                </label>
+
+                <input
+                    type="text"
+                    id="userName"
+                    placeholder="Full name"
+                >
+
+            </div>
+
+            <div class="form-group">
+
+                <label>
+                    Sales Man Code
+                </label>
+
+                <input
+                    type="text"
+                    id="userSMC"
+                    maxlength="5"
+                    placeholder="SMC"
+                >
+
+            </div>
+
+            <div class="form-group">
+
+                <label>
+                    Outlet
+                </label>
+
+                <input
+                    type="text"
+                    id="userOutlet"
+                    placeholder="Outlet"
+                >
+
+            </div>
+
+            <div class="form-group">
+
+                <label>
+                    Role
+                </label>
+
+                <select id="userRole">
+
+                    <option value="staff">
+                        Staff
+                    </option>
+
+                    <option value="admin">
+                        Admin
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+        <div class="form-actions">
+
+            <button
+                class="btn btn-primary"
+                onclick="saveUser()"
+            >
+                Add User
+            </button>
+
+            <button
+                class="btn btn-light"
+                onclick="closeModal('userModal')"
+            >
+                Cancel
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ============================================================= -->
+<!-- STAFF BREAKDOWN MODAL -->
+<!-- ============================================================= -->
+
+<div class="modal-overlay" id="staffBreakdownModal">
+
+    <div class="modal modal-large">
+
+        <div class="modal-header">
+
+            <div>
+                <h3 id="staffBreakdownTitle">
+                    Promotion Breakdown
+                </h3>
+
+                <p
+                    id="staffBreakdownMeta"
+                    style="margin:5px 0 0;color:#6b7280;font-size:13px;"
+                ></p>
+            </div>
+
+            <button class="close-btn" onclick="closeModal('staffBreakdownModal')">
+                ×
+            </button>
+
+        </div>
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Promotion</th>
+                        <th>Type</th>
+                        <th>Rate</th>
+                        <th>Quantity</th>
+                        <th>Incentive</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody id="staffBreakdownBody">
+                    <tr>
+                        <td colspan="6" class="loading">
+                            Loading...
+                        </td>
+                    </tr>
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div id="message" class="message"></div>
+
+
+<script>
+    let allSubmissions = [];
+    let promotions = [];
+    let users = [];
+
+    let selectedMonth = getCurrentMonth();
+
+    let currentFilteredSubmissions = [];
+
+    let currentSubmissionId = null;
+    let editingPromotionId = null;
+
+
+    /* ========================================================= */
+    /* HELPERS */
+    /* ========================================================= */
+
+    function getCurrentMonth() {
+        const d = new Date();
+
+        return d.getFullYear() +
+            "-" +
+            String(d.getMonth() + 1).padStart(2, "0");
+    }
+
+
+    function money(value) {
+        return "S$" + Number(value || 0).toFixed(2);
+    }
+
+
+    function escapeHtml(value) {
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+
+    function formatDate(value) {
+
+        if (!value) {
+            return "-";
+        }
+
+        const date = new Date(value);
+
+        if (isNaN(date.getTime())) {
+            return value;
+        }
+
+        return date.toLocaleDateString("en-SG");
+    }
+
+
+    function promotionStatus(p) {
+
+        const today =
+            new Date().toISOString().slice(0, 10);
+
+        if (!p.start_date || !p.end_date) {
+            return p.status || "Active";
+        }
+
+        if (p.end_date < today) {
+            return "Expired";
+        }
+
+        if (p.start_date > today) {
+            return "Upcoming";
+        }
+
+        return "Active";
+    }
+
+
+    function statusBadge(status) {
+
+        const value = String(status || "").toLowerCase();
+
+        let cls = "status-default";
+
+        if (value === "approved") {
+            cls = "status-approved";
+        }
+
+        if (value === "pending") {
+            cls = "status-pending";
+        }
+
+        if (value === "rejected") {
+            cls = "status-rejected";
+        }
+
+        if (value === "active") {
+            cls = "status-active";
+        }
+
+        if (value === "upcoming") {
+            cls = "status-upcoming";
+        }
+
+        if (value === "expired") {
+            cls = "status-expired";
+        }
+
+        return `
+            <span class="status ${cls}">
+                ${escapeHtml(status || "-")}
+            </span>
+        `;
+    }
+
+
+    function typeBadge(type) {
+
+        if (type === "outlet_bundle") {
+
+            return `
+                <span class="type-badge type-bundle">
+                    Outlet Bundle
+                </span>
+            `;
+        }
+
+        return `
+            <span class="type-badge">
+                Individual
+            </span>
+        `;
+    }
+
+
+    function closeModal(id) {
+        document.getElementById(id).classList.remove("show");
+    }
+
+
+    function showModal(id) {
+        document.getElementById(id).classList.add("show");
+    }
+
+
+    function showMessage(message, type = "success") {
+
+        const el = document.getElementById("message");
+
+        el.textContent = message;
+
+        el.className =
+            "message show " + type;
+
+        setTimeout(() => {
+            el.classList.remove("show");
+        }, 3500);
+    }
+
+
+    /* ========================================================= */
+    /* API */
+    /* ========================================================= */
+
+    async function api(action, options = {}) {
+
+        let url =
+            "admin.php?action=" +
+            encodeURIComponent(action);
+
+        if (options.params) {
+
+            const params =
+                new URLSearchParams(options.params);
+
+            url += "&" + params.toString();
+        }
+
+        const fetchOptions = {
+            method: options.method || "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        if (options.method === "POST") {
+
+            fetchOptions.headers["Content-Type"] =
+                "application/json";
+
+            fetchOptions.body =
+                JSON.stringify(options.body || {});
+        }
+
+        const response =
+            await fetch(url, fetchOptions);
+
+        const data =
+            await response.json();
+
+        if (!response.ok || data.success === false) {
+
+            throw new Error(
+                data.message || "Request failed."
+            );
+        }
+
+        return data;
+    }
+
+
+    /* ========================================================= */
+    /* LOAD */
+    /* ========================================================= */
+
+    async function loadData() {
+
+        try {
+
+            const data = await api("bootstrap", {
+                params: {
+                    month: selectedMonth
+                }
+            });
+
+            allSubmissions =
+                data.submissions || [];
+
+            promotions =
+                data.promotions || [];
+
+            users =
+                data.users || [];
+
+            document.getElementById("adminName").textContent =
+                data.current_user_name ||
+                "Admin";
+
+            populateFilters();
+
+            renderDashboard(data.dashboard || {});
+
+            renderSubmissions();
+
+            renderMonthlySummary(
+                data.monthlySummary || {}
+            );
+
+            renderTop3(
+                data.top3 || {
+                    top3: [],
+                    breakdown: []
+                }
+            );
+
+            renderPromotions();
+
+            renderUsers();
+
+        } catch (error) {
+
+            console.error(error);
+
+            showMessage(
+                error.message ||
+                "Unable to load data.",
+                "error"
+            );
+        }
+    }
+
+
+    /* ========================================================= */
+    /* TABS */
+    /* ========================================================= */
+
+    function showTab(tabId, button) {
+
+        document
+            .querySelectorAll(".tab")
+            .forEach(tab => {
+                tab.classList.remove("active");
+            });
+
+        document
+            .querySelectorAll(".tab-btn")
+            .forEach(btn => {
+                btn.classList.remove("active");
+            });
+
+        document
+            .getElementById(tabId)
+            .classList.add("active");
+
+        if (button) {
+            button.classList.add("active");
+        }
+    }
+
+
+    /* ========================================================= */
+    /* MONTH */
+    /* ========================================================= */
+
+    function changeMonth(month) {
+
+        if (!month) {
+            return;
+        }
+
+        selectedMonth = month;
+
+        document.getElementById("dashboardMonth").value =
+            selectedMonth;
+
+        document.getElementById("monthlyMonth").value =
+            selectedMonth;
+
+        document.getElementById("top3Month").value =
+            selectedMonth;
+
+        loadData();
+    }
+
+
+    /* ========================================================= */
+    /* DASHBOARD */
+    /* ========================================================= */
+
+    function renderDashboard(dashboard) {
+
+        document.getElementById("totalSubmissions").textContent =
+            dashboard.totalSubmissions || 0;
+
+        document.getElementById("pendingSubmissions").textContent =
+            dashboard.pending || 0;
+
+        document.getElementById("approvedSubmissions").textContent =
+            dashboard.approved || 0;
+
+        document.getElementById("rejectedSubmissions").textContent =
+            dashboard.rejected || 0;
+
+        document.getElementById("approvedIndividual").textContent =
+            money(dashboard.approvedIndividual || 0);
+
+        document.getElementById("bundlePool").textContent =
+            money(dashboard.bundlePool || 0);
+
+        document.getElementById("staffCount").textContent =
+            dashboard.staffCount || 0;
+
+
+        const body =
+            document.getElementById("dashboardRecentBody");
+
+        const rows =
+            allSubmissions
+                .filter(s => {
+                    return String(s.submission_date || "")
+                        .slice(0, 7) === selectedMonth;
+                })
+                .slice(0, 10);
+
+        if (!rows.length) {
+
+            body.innerHTML = `
+                <tr>
+                    <td colspan="10" class="empty">
+                        No submissions for this month.
+                    </td>
+                </tr>
+            `;
+
+            return;
+        }
+
+
+        body.innerHTML =
+            rows.map(s => {
+
+                const total =
+                    Number(s.quantity || 0) *
+                    Number(s.Rate || 0);
+
+                return `
+                    <tr>
+                        <td>${escapeHtml(s.incentive_id)}</td>
+                        <td>${escapeHtml(s.SMC)}</td>
+                        <td>${escapeHtml(s.staff_name)}</td>
+                        <td>${escapeHtml(s.outlet)}</td>
+                        <td>${escapeHtml(s.promo)}</td>
+                        <td>${typeBadge(s.type)}</td>
+                        <td>${money(s.Rate)}</td>
+                        <td>${escapeHtml(s.quantity)}</td>
+                        <td class="money">${money(total)}</td>
+                        <td>${statusBadge(s.status)}</td>
+                        <td>${formatDate(s.submission_date)}</td>
+                    </tr>
+                `;
+
+            }).join("");
+    }
+
+
+    /* ========================================================= */
+    /* FILTERS */
+    /* ========================================================= */
+
+    function populateFilters() {
+
+        const promotionSelect =
+            document.getElementById("filterPromotion");
+
+        const smcSelect =
+            document.getElementById("filterSMC");
+
+        const outletSelect =
+            document.getElementById("filterOutlet");
+
+
+        const oldPromotion =
+            promotionSelect.value;
+
+        const oldSMC =
+            smcSelect.value;
+
+        const oldOutlet =
+            outletSelect.value;
+
+
+        promotionSelect.innerHTML =
+            `<option value="">All Promotions</option>` +
+            promotions.map(p => `
+                <option value="${escapeHtml(p.promo_id)}">
+                    ${escapeHtml(p.promo)}
+                </option>
+            `).join("");
+
+
+        const smcs =
+            [...new Set(
+                allSubmissions
+                    .map(s => s.SMC)
+                    .filter(Boolean)
+            )].sort();
+
+
+        smcSelect.innerHTML =
+            `<option value="">All SMC</option>` +
+            smcs.map(smc => `
+                <option value="${escapeHtml(smc)}">
+                    ${escapeHtml(smc)}
+                </option>
+            `).join("");
+
+
+        const outlets =
+            [...new Set(
+                allSubmissions
+                    .map(s => s.outlet)
+                    .filter(Boolean)
+            )].sort();
+
+
+        outletSelect.innerHTML =
+            `<option value="">All Outlets</option>` +
+            outlets.map(outlet => `
+                <option value="${escapeHtml(outlet)}">
+                    ${escapeHtml(outlet)}
+                </option>
+            `).join("");
+
+
+        promotionSelect.value =
+            oldPromotion;
+
+        smcSelect.value =
+            oldSMC;
+
+        outletSelect.value =
+            oldOutlet;
+    }
+
+
+    function applySubmissionFilters() {
+
+        const search =
+            document.getElementById("filterSearch")
+                .value
+                .trim()
+                .toLowerCase();
+
+        const status =
+            document.getElementById("filterStatus").value;
+
+        const promotion =
+            document.getElementById("filterPromotion").value;
+
+        const smc =
+            document.getElementById("filterSMC").value;
+
+        const outlet =
+            document.getElementById("filterOutlet").value;
+
+        const from =
+            document.getElementById("filterFrom").value;
+
+        const to =
+            document.getElementById("filterTo").value;
+
+
+        currentFilteredSubmissions =
+            allSubmissions.filter(s => {
+
+                const total =
+                    Number(s.quantity || 0) *
+                    Number(s.Rate || 0);
+
+                const searchable =
+                    [
+                        s.incentive_id,
+                        s.SMC,
+                        s.staff_name,
+                        s.outlet,
+                        s.promo,
+                        s.type,
+                        s.status,
+                        total
+                    ]
+                    .join(" ")
+                    .toLowerCase();
+
+
+                if (
+                    search &&
+                    !searchable.includes(search)
+                ) {
+                    return false;
+                }
+
+
+                if (
+                    status &&
+                    String(s.status).toLowerCase() !==
+                    status.toLowerCase()
+                ) {
+                    return false;
+                }
+
+
+                if (
+                    promotion &&
+                    String(s.promo_id) !==
+                    String(promotion)
+                ) {
+                    return false;
+                }
+
+
+                if (
+                    smc &&
+                    String(s.SMC) !==
+                    String(smc)
+                ) {
+                    return false;
+                }
+
+
+                if (
+                    outlet &&
+                    String(s.outlet) !==
+                    String(outlet)
+                ) {
+                    return false;
+                }
+
+
+                const date =
+                    String(s.submission_date || "")
+                        .slice(0, 10);
+
+
+                if (from && date < from) {
+                    return false;
+                }
+
+                if (to && date > to) {
+                    return false;
+                }
+
+
+                return true;
+
+            });
+
+
+        renderFilteredSubmissions();
+    }
+
+
+    function clearSubmissionFilters() {
+
+        document.getElementById("filterSearch").value = "";
+        document.getElementById("filterStatus").value = "";
+        document.getElementById("filterPromotion").value = "";
+        document.getElementById("filterSMC").value = "";
+        document.getElementById("filterOutlet").value = "";
+        document.getElementById("filterFrom").value = "";
+        document.getElementById("filterTo").value = "";
+
+        applySubmissionFilters();
+    }
+
+
+    /* ========================================================= */
+    /* SUBMISSIONS */
+    /* ========================================================= */
+
+    function renderSubmissions() {
+
+        currentFilteredSubmissions =
+            [...allSubmissions];
+
+        renderFilteredSubmissions();
+    }
+
+
+    function renderFilteredSubmissions() {
+
+        const body =
+            document.getElementById("submissionBody");
+
+
+        if (!currentFilteredSubmissions.length) {
+
+            body.innerHTML = `
+                <tr>
+                    <td colspan="12" class="empty">
+                        No matching submissions.
+                    </td>
+                </tr>
+            `;
+
+            return;
+        }
+
+
+        body.innerHTML =
+            currentFilteredSubmissions.map(s => {
+
+                const total =
+                    Number(s.quantity || 0) *
+                    Number(s.Rate || 0);
+
+                return `
+                    <tr>
+
+                        <td>
+                            ${escapeHtml(s.incentive_id)}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(s.SMC)}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(s.staff_name)}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(s.outlet)}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(s.promo)}
+                        </td>
+
+                        <td>
+                            ${typeBadge(s.type)}
+                        </td>
+
+                        <td>
+                            ${money(s.Rate)}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(s.quantity)}
+                        </td>
+
+                        <td class="money">
+                            ${money(total)}
+                        </td>
+
+                        <td>
+                            ${statusBadge(s.status)}
+                        </td>
+
+                        <td>
+                            ${formatDate(s.submission_date)}
+                        </td>
+
+                        <td class="action-column">
+
+                            <button
+                                class="btn btn-primary btn-small"
+                                onclick="openSubmissionView(${Number(s.incentive_id)})"
+                            >
+                                View
+                            </button>
+
+                        </td>
+
+                    </tr>
+                `;
+
+            }).join("");
+    }
+
+
+    /* ========================================================= */
+    /* SUBMISSION VIEW */
+    /* ========================================================= */
+
+    function openSubmissionView(id) {
+
+        const submission =
+            allSubmissions.find(
+                s => Number(s.incentive_id) === Number(id)
+            );
+
+
+        if (!submission) {
+            showMessage("Submission not found.", "error");
+            return;
+        }
+
+
+        currentSubmissionId =
+            Number(id);
+
+
+        const total =
+            Number(submission.quantity || 0) *
+            Number(submission.Rate || 0);
+
+
+        let proofHtml =
+            `<span style="color:#9ca3af;">No proof</span>`;
+
+
+        if (submission.proof) {
+
+            proofHtml = `
+                <a
+                    href="${escapeHtml(submission.proof)}"
+                    target="_blank"
+                >
+                    <img
+                        src="${escapeHtml(submission.proof)}"
+                        class="proof-image"
+                    >
+                </a>
+            `;
+        }
+
+
+        let items = [];
+
+        for (let i = 1; i <= 5; i++) {
+
+            const value =
+                submission["item_" + i];
+
+            if (value) {
+                items.push(value);
+            }
+        }
+
+
+        const bundleHtml =
+            items.length
+                ? `
+                    <div class="item-tags">
+                        ${items.map(item => `
+                            <span class="item-tag">
+                                ${escapeHtml(item)}
+                            </span>
+                        `).join("")}
+                    </div>
+                `
+                : "-";
+
+
+        document.getElementById("submissionDetails").innerHTML = `
+
+            <div class="detail-grid">
+
+                <div class="detail-box">
+                    <div class="detail-label">ID</div>
+                    <div class="detail-value">
+                        ${escapeHtml(submission.incentive_id)}
+                    </div>
+                </div>
+
+                <div class="detail-box">
+                    <div class="detail-label">Staff</div>
+                    <div class="detail-value">
+                        ${escapeHtml(submission.staff_name)}
+                    </div>
+                </div>
+
+                <div class="detail-box">
+                    <div class="detail-label">SMC</div>
+                    <div class="detail-value">
+                        ${escapeHtml(submission.SMC)}
+                    </div>
+                </div>
+
+                <div class="detail-box">
+                    <div class="detail-label">Outlet</div>
+                    <div class="detail-value">
+                        ${escapeHtml(submission.outlet)}
+                    </div>
+                </div>
+
+                <div class="detail-box">
+                    <div class="detail-label">Promotion</div>
+                    <div class="detail-value">
+                        ${escapeHtml(submission.promo)}
+                    </div>
+                </div>
+
+                <div class="detail-box">
+                    <div class="detail-label">Type</div>
+                    <div class="detail-value">
+                        ${typeBadge(submission.type)}
+                    </div>
+                </div>
+
+                <div class="detail-box">
+                    <div class="detail-label">Rate</div>
+                    <div class="detail-value">
+                        ${money(submission.Rate)}
+                    </div>
+                </div>
+
+                <div class="detail-box">
+                    <div class="detail-label">Quantity</div>
+                    <div class="detail-value">
+                        ${escapeHtml(submission.quantity)}
+                    </div>
+                </div>
+
+                <div class="detail-box">
+                    <div class="detail-label">Total</div>
+                    <div class="detail-value">
+                        ${money(total)}
+                    </div>
+                </div>
+
+                <div class="detail-box">
+                    <div class="detail-label">Status</div>
+                    <div class="detail-value">
+                        ${statusBadge(submission.status)}
+                    </div>
+                </div>
+
+                <div class="detail-box">
+                    <div class="detail-label">Submission Date</div>
+                    <div class="detail-value">
+                        ${formatDate(submission.submission_date)}
+                    </div>
+                </div>
+
+                <div class="detail-box">
+                    <div class="detail-label">Promotion Status</div>
+                    <div class="detail-value">
+                        ${statusBadge(
+                            promotionStatus(submission)
+                        )}
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div class="panel" style="box-shadow:none;background:#f9fafb;">
+
+                <strong>Bundle Items</strong>
+
+                <div style="margin-top:10px;">
+                    ${bundleHtml}
+                </div>
+
+            </div>
+
+
+            <div class="panel" style="box-shadow:none;background:#f9fafb;">
+
+                <strong>Proof</strong>
+
+                <div style="margin-top:10px;">
+                    ${proofHtml}
+                </div>
+
+            </div>
+
+
+            ${
+                submission.rejection_reason
+                    ? `
+                        <div
+                            class="panel"
+                            style="box-shadow:none;background:#fef2f2;"
+                        >
+                            <strong>Rejection Reason</strong>
+
+                            <div style="margin-top:8px;">
+                                ${escapeHtml(
+                                    submission.rejection_reason
+                                )}
+                            </div>
+                        </div>
+                    `
+                    : ""
+            }
+
+        `;
+
+
+        const approved =
+            String(submission.status).toLowerCase() ===
+            "approved";
+
+        const rejected =
+            String(submission.status).toLowerCase() ===
+            "rejected";
+
+
+        document.getElementById("approveSubmissionBtn")
+            .style.display =
+            approved ? "none" : "inline-block";
+
+
+        document.getElementById("rejectSubmissionBtn")
+            .style.display =
+            rejected ? "none" : "inline-block";
+
+
+        document.getElementById("editSubmissionBtn")
+            .style.display =
+            approved || rejected
+                ? "none"
+                : "inline-block";
+
+
+        showModal("submissionModal");
+    }
+
+
+    async function approveCurrentSubmission() {
+
+        if (!currentSubmissionId) {
+            return;
+        }
+
+
+        if (!confirm("Approve this submission?")) {
+            return;
+        }
+
+
+        try {
+
+            await api("approve_submission", {
+                method: "POST",
+                body: {
+                    incentive_id: currentSubmissionId
+                }
+            });
+
+
+            closeModal("submissionModal");
+
+            showMessage(
+                "Submission approved.",
+                "success"
+            );
+
+            await loadData();
+
+        } catch (error) {
+
+            showMessage(
+                error.message,
+                "error"
+            );
+        }
+    }
+
+
+    function rejectCurrentSubmission() {
+
+        if (!currentSubmissionId) {
+            return;
+        }
+
+        document.getElementById("rejectionReason").value = "";
+
+        showModal("rejectModal");
+    }
+
+
+    async function confirmReject() {
+
+        const reason =
+            document.getElementById("rejectionReason")
+                .value
+                .trim();
+
+
+        if (!reason) {
+
+            showMessage(
+                "Please enter a rejection reason.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        try {
+
+            await api("reject_submission", {
+                method: "POST",
+                body: {
+                    incentive_id: currentSubmissionId,
+                    rejection_reason: reason
+                }
+            });
+
+
+            closeModal("rejectModal");
+            closeModal("submissionModal");
+
+            showMessage(
+                "Submission rejected.",
+                "success"
+            );
+
+            await loadData();
+
+        } catch (error) {
+
+            showMessage(
+                error.message,
+                "error"
+            );
+        }
+    }
+
+
+    function openSubmissionEdit() {
+
+        const submission =
+            allSubmissions.find(
+                s =>
+                    Number(s.incentive_id) ===
+                    Number(currentSubmissionId)
+            );
+
+
+        if (!submission) {
+            return;
+        }
+
+
+        const select =
+            document.getElementById("editSubmissionPromo");
+
+
+        select.innerHTML =
+            promotions
+                .map(p => `
+                    <option
+                        value="${escapeHtml(p.promo_id)}"
+                        ${
+                            Number(p.promo_id) ===
+                            Number(submission.promo_id)
+                                ? "selected"
+                                : ""
+                        }
+                    >
+                        ${escapeHtml(p.promo)}
+                    </option>
+                `)
+                .join("");
+
+
+        showModal("submissionEditModal");
+    }
+
+
+    async function saveSubmissionPromotion() {
+
+        const promoId =
+            document.getElementById("editSubmissionPromo").value;
+
+
+        if (!promoId) {
+            showMessage(
+                "Please select a promotion.",
+                "error"
+            );
+            return;
+        }
+
+
+        try {
+
+            await api("edit_submission_promotion", {
+                method: "POST",
+                body: {
+                    incentive_id: currentSubmissionId,
+                    promo_id: Number(promoId)
+                }
+            });
+
+
+            closeModal("submissionEditModal");
+            closeModal("submissionModal");
+
+            showMessage(
+                "Promotion updated.",
+                "success"
+            );
+
+            await loadData();
+
+        } catch (error) {
+
+            showMessage(
+                error.message,
+                "error"
+            );
+        }
+    }
+
+
+    /* ========================================================= */
+    /* MONTHLY SUMMARY */
+    /* ========================================================= */
+
+    function renderMonthlySummary(summary) {
+
+        document.getElementById("monthlyIndividualTotal")
+            .textContent =
+            money(summary.totalIndividual || 0);
+
+        document.getElementById("monthlyBundleTotal")
+            .textContent =
+            money(summary.totalBundle || 0);
+
+        document.getElementById("monthlyGrandTotal")
+            .textContent =
+            money(summary.grandTotal || 0);
+
+
+        const individualBody =
+            document.getElementById("individualSummaryBody");
+
+
+        const individuals =
+            summary.individual || [];
+
+
+        if (!individuals.length) {
+
+            individualBody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="empty">
+                        No approved individual incentives
+                        for this month.
+                    </td>
+                </tr>
+            `;
+
+        } else {
+
+            individualBody.innerHTML =
+                individuals.map(row => {
+
+                    return `
+                        <tr>
+
+                            <td>
+                                ${escapeHtml(row.SMC)}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(row.staff_name)}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(row.outlet)}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(row.quantity)}
+                            </td>
+
+                            <td class="money">
+                                ${money(row.incentive)}
+                            </td>
+
+                            <td>
+                                <button
+                                    class="btn btn-primary btn-small"
+                                    onclick="openStaffBreakdown(
+                                        '${escapeJs(row.SMC)}',
+                                        '${escapeJs(row.staff_name)}',
+                                        '${escapeJs(row.outlet)}'
+                                    )"
+                                >
+                                    View Breakdown
+                                </button>
+                            </td>
+
+                        </tr>
+                    `;
+
+                }).join("");
+        }
+
+
+        const bundleBody =
+            document.getElementById("bundleSummaryBody");
+
+
+        const bundles =
+            summary.bundle || [];
+
+
+        if (!bundles.length) {
+
+            bundleBody.innerHTML = `
+                <tr>
+                    <td colspan="3" class="empty">
+                        No approved outlet bundle submissions
+                        for this month.
+                    </td>
+                </tr>
+            `;
+
+        } else {
+
+            bundleBody.innerHTML =
+                bundles.map(row => {
+
+                    return `
+                        <tr>
+
+                            <td>
+                                ${escapeHtml(row.outlet)}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(row.quantity)}
+                            </td>
+
+                            <td class="money">
+                                ${money(row.incentive)}
+                            </td>
+
+                        </tr>
+                    `;
+
+                }).join("");
+        }
+    }
+
+
+    function escapeJs(value) {
+
+        return String(value ?? "")
+            .replace(/\\/g, "\\\\")
+            .replace(/'/g, "\\'")
+            .replace(/\n/g, "\\n")
+            .replace(/\r/g, "\\r");
+    }
+
+
+    async function openStaffBreakdown(
+        smc,
+        staffName,
+        outlet
+    ) {
+
+        document.getElementById("staffBreakdownTitle")
+            .textContent =
+            staffName + " - Promotion Breakdown";
+
+
+        document.getElementById("staffBreakdownMeta")
+            .textContent =
+            "SMC: " +
+            smc +
+            " | Outlet: " +
+            outlet +
+            " | Month: " +
+            selectedMonth;
+
+
+        const body =
+            document.getElementById("staffBreakdownBody");
+
+
+        body.innerHTML = `
+            <tr>
+                <td colspan="6" class="loading">
+                    Loading...
+                </td>
+            </tr>
+        `;
+
+
+        showModal("staffBreakdownModal");
+
+
+        try {
+
+            const data =
+                await api(
+                    "staff_promotion_breakdown",
+                    {
+                        params: {
+                            month: selectedMonth,
+                            smc: smc
+                        }
+                    }
+                );
+
+
+            const rows =
+                data.breakdown || [];
+
+
+            if (!rows.length) {
+
+                body.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="empty">
+                            No approved promotion records.
+                        </td>
+                    </tr>
+                `;
+
+                return;
+            }
+
+
+            body.innerHTML =
+                rows.map(row => {
+
+                    return `
+                        <tr>
+
+                            <td>
+                                ${escapeHtml(row.promo)}
+                            </td>
+
+                            <td>
+                                ${typeBadge(row.type)}
+                            </td>
+
+                            <td>
+                                ${money(row.Rate)}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(row.quantity)}
+                            </td>
+
+                            <td class="money">
+                                ${money(row.incentive)}
+                            </td>
+
+                            <td>
+                                ${statusBadge("approved")}
+                            </td>
+
+                        </tr>
+                    `;
+
+                }).join("");
+
+
+        } catch (error) {
+
+            body.innerHTML = `
+                <tr>
+                    <td colspan="6" class="empty">
+                        ${escapeHtml(error.message)}
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+
+    /* ========================================================= */
+    /* TOP 3 */
+    /* ========================================================= */
+
+    function renderTop3(data) {
+
+        const top3 =
+            data.top3 || [];
+
+        renderTopCard(
+            1,
+            top3[0],
+            0.50
+        );
+
+        renderTopCard(
+            2,
+            top3[1],
+            0.35
+        );
+
+        renderTopCard(
+            3,
+            top3[2],
+            0.15
+        );
+
+
+        renderTop3Breakdown(
+            data.breakdown || []
+        );
+    }
+
+
+    function renderTopCard(rank, person, shareRate) {
+
+        const prefix =
+            "top" + rank;
+
+
+        if (!person) {
+
+            document.getElementById(prefix + "Name")
+                .textContent =
+                "No Data";
+
+            document.getElementById(prefix + "Meta")
+                .textContent =
+                "No qualifying staff";
+
+            document.getElementById(prefix + "Individual")
+                .textContent =
+                "S$0.00";
+
+            document.getElementById(prefix + "Bundle")
+                .textContent =
+                "S$0.00";
+
+            document.getElementById(prefix + "Total")
+                .textContent =
+                "S$0.00";
+
+            return;
+        }
+
+
+        const individual =
+            Number(person.individual_incentive || 0);
+
+        const bundlePool =
+            Number(person.bundle_pool || 0);
+
+        const bundleShare =
+            Number(
+                person.bundle_share ??
+                bundlePool * shareRate
+            );
+
+        const total =
+            individual + bundleShare;
+
+
+        document.getElementById(prefix + "Name")
+            .textContent =
+            person.staff_name || "-";
+
+
+        document.getElementById(prefix + "Meta")
+            .textContent =
+            "SMC: " +
+            (person.SMC || "-") +
+            " | Outlet: " +
+            (person.outlet || "-");
+
+
+        document.getElementById(prefix + "Individual")
+            .textContent =
+            money(individual);
+
+
+        document.getElementById(prefix + "Bundle")
+            .textContent =
+            money(bundleShare);
+
+
+        document.getElementById(prefix + "Total")
+            .textContent =
+            money(total);
+    }
+
+
+    function renderTop3Breakdown(rows) {
+
+        const body =
+            document.getElementById("top3BreakdownBody");
+
+
+        if (!rows.length) {
+
+            body.innerHTML = `
+                <tr>
+                    <td colspan="8" class="empty">
+                        No approved individual incentive
+                        data for this month.
+                    </td>
+                </tr>
+            `;
+
+            return;
+        }
+
+
+        let html = "";
+
+        let currentRank = null;
+        let currentTotal = 0;
+
+
+        rows.forEach((row, index) => {
+
+            const rank =
+                Number(row.rank);
+
+            if (
+                currentRank !== null &&
+                currentRank !== rank
+            ) {
+
+                html += `
+                    <tr class="breakdown-total">
+
+                        <td colspan="7">
+                            ${ordinal(currentRank)}
+                            Place Total
+                        </td>
+
+                        <td>
+                            ${money(currentTotal)}
+                        </td>
+
+                    </tr>
+                `;
+
+                currentTotal = 0;
+            }
+
+
+            currentRank = rank;
+
+            currentTotal +=
+                Number(row.incentive || 0);
+
+
+            html += `
+                <tr>
+
+                    <td>
+                        ${ordinal(rank)}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(row.staff_name)}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(row.SMC)}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(row.promo)}
+                    </td>
+
+                    <td>
+                        ${typeBadge(row.type)}
+                    </td>
+
+                    <td>
+                        ${money(row.Rate)}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(row.quantity)}
+                    </td>
+
+                    <td class="money">
+                        ${money(row.incentive)}
+                    </td>
+
+                </tr>
+            `;
+
+
+            if (index === rows.length - 1) {
+
+                html += `
+                    <tr class="breakdown-total">
+
+                        <td colspan="7">
+                            ${ordinal(currentRank)}
+                            Place Total
+                        </td>
+
+                        <td>
+                            ${money(currentTotal)}
+                        </td>
+
+                    </tr>
+                `;
+            }
+
+        });
+
+
+        body.innerHTML = html;
+    }
+
+
+    function ordinal(rank) {
+
+        if (rank === 1) {
+            return "1st";
+        }
+
+        if (rank === 2) {
+            return "2nd";
+        }
+
+        if (rank === 3) {
+            return "3rd";
+        }
+
+        return rank + "th";
+    }
+
+
+    /* ========================================================= */
+    /* PROMOTIONS */
+    /* ========================================================= */
+
+    function renderPromotions() {
+
+        const body =
+            document.getElementById("promotionBody");
+
+
+        if (!promotions.length) {
+
+            body.innerHTML = `
+                <tr>
+                    <td colspan="9" class="empty">
+                        No promotions found.
+                    </td>
+                </tr>
+            `;
+
+            return;
+        }
+
+
+        body.innerHTML =
+            promotions.map(p => {
+
+                const status =
+                    promotionStatus(p);
+
+
+                let items = [];
+
+                for (let i = 1; i <= 5; i++) {
+
+                    if (p["item_" + i]) {
+                        items.push(p["item_" + i]);
+                    }
+                }
+
+
+                return `
+                    <tr>
+
+                        <td>
+                            ${escapeHtml(p.promo_id)}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(p.promo)}
+                        </td>
+
+                        <td class="money">
+                            ${money(p.Rate)}
+                        </td>
+
+                        <td>
+                            ${typeBadge(p.type)}
+                        </td>
+
+                        <td>
+                            ${formatDate(p.start_date)}
+                        </td>
+
+                        <td>
+                            ${formatDate(p.end_date)}
+                        </td>
+
+                        <td>
+                            ${statusBadge(status)}
+                        </td>
+
+                        <td>
+                            <div class="item-tags">
+                                ${
+                                    items.length
+                                        ? items.map(item => `
+                                            <span class="item-tag">
+                                                ${escapeHtml(item)}
+                                            </span>
+                                        `).join("")
+                                        : "-"
+                                }
+                            </div>
+                        </td>
+
+                        <td>
+
+                            <button
+                                class="btn btn-warning btn-small"
+                                onclick="openPromotionModal(
+                                    ${Number(p.promo_id)}
+                                )"
+                            >
+                                Edit
+                            </button>
+
+                        </td>
+
+                    </tr>
+                `;
+
+            }).join("");
+    }
+
+
+    function openPromotionModal(id = null) {
+
+        editingPromotionId =
+            id;
+
+
+        document.getElementById("promoName").value = "";
+        document.getElementById("promoRate").value = "";
+        document.getElementById("promoType").value = "individual";
+        document.getElementById("promoStartDate").value = "";
+        document.getElementById("promoEndDate").value = "";
+        document.getElementById("promoStatus").value = "";
+
+        for (let i = 1; i <= 5; i++) {
+            document.getElementById("item" + i).value = "";
+        }
+
+
+        document.getElementById("promotionModalTitle")
+            .textContent =
+            id
+                ? "Edit Promotion"
+                : "Add Promotion";
+
+
+        if (id) {
+
+            const p =
+                promotions.find(
+                    item =>
+                        Number(item.promo_id) ===
+                        Number(id)
+                );
+
+
+            if (!p) {
+                showMessage(
+                    "Promotion not found.",
+                    "error"
+                );
+                return;
+            }
+
+
+            document.getElementById("promoName").value =
+                p.promo || "";
+
+            document.getElementById("promoRate").value =
+                p.Rate || "";
+
+            document.getElementById("promoType").value =
+                p.type || "individual";
+
+            document.getElementById("promoStartDate").value =
+                p.start_date || "";
+
+            document.getElementById("promoEndDate").value =
+                p.end_date || "";
+
+
+            for (let i = 1; i <= 5; i++) {
+
+                document.getElementById("item" + i).value =
+                    p["item_" + i] || "";
+            }
+        }
+
+
+        toggleBundleFields();
+
+        updatePromotionStatusPreview();
+
+        showModal("promotionModal");
+    }
+
+
+    function toggleBundleFields() {
+
+        const type =
+            document.getElementById("promoType").value;
+
+
+        const container =
+            document.getElementById("bundleItemsContainer");
+
+
+        if (type === "outlet_bundle") {
+
+            container.classList.remove("hidden");
+
+            for (let i = 1; i <= 5; i++) {
+
+                document.getElementById("item" + i)
+                    .disabled = false;
+            }
+
+        } else {
+
+            container.classList.add("hidden");
+
+            for (let i = 1; i <= 5; i++) {
+
+                document.getElementById("item" + i)
+                    .disabled = true;
+
+                document.getElementById("item" + i)
+                    .value = "";
+            }
+        }
+    }
+
+
+    function updatePromotionStatusPreview() {
+
+        const start =
+            document.getElementById("promoStartDate").value;
+
+        const end =
+            document.getElementById("promoEndDate").value;
+
+
+        const status =
+            document.getElementById("promoStatus");
+
+
+        if (!start || !end) {
+
+            status.value = "Active";
+
+            return;
+        }
+
+
+        const today =
+            new Date().toISOString().slice(0, 10);
+
+
+        if (end < today) {
+
+            status.value =
+                "Expired";
+
+        } else if (start > today) {
+
+            status.value =
+                "Upcoming";
+
+        } else {
+
+            status.value =
+                "Active";
+        }
+    }
+
+
+    async function savePromotion() {
+
+        const promo =
+            document.getElementById("promoName")
+                .value
+                .trim();
+
+        const rate =
+            Number(
+                document.getElementById("promoRate")
+                    .value
+            );
+
+        const type =
+            document.getElementById("promoType")
+                .value;
+
+        const startDate =
+            document.getElementById("promoStartDate")
+                .value;
+
+        const endDate =
+            document.getElementById("promoEndDate")
+                .value;
+
+
+        if (!promo) {
+
+            showMessage(
+                "Promotion name is required.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        if (
+            isNaN(rate) ||
+            rate < 0
+        ) {
+
+            showMessage(
+                "Please enter a valid rate.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        if (!startDate || !endDate) {
+
+            showMessage(
+                "Start date and end date are required.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        if (endDate < startDate) {
+
+            showMessage(
+                "End date cannot be before start date.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        const body = {
+
+            promo: promo,
+
+            Rate: rate,
+
+            type: type,
+
+            start_date: startDate,
+
+            end_date: endDate,
+
+            item_1:
+                document.getElementById("item1").value.trim(),
+
+            item_2:
+                document.getElementById("item2").value.trim(),
+
+            item_3:
+                document.getElementById("item3").value.trim(),
+
+            item_4:
+                document.getElementById("item4").value.trim(),
+
+            item_5:
+                document.getElementById("item5").value.trim()
+        };
+
+
+        try {
+
+            if (editingPromotionId) {
+
+                body.promo_id =
+                    editingPromotionId;
+
+                await api("edit_promotion", {
+                    method: "POST",
+                    body: body
+                });
+
+                showMessage(
+                    "Promotion updated.",
+                    "success"
+                );
+
+            } else {
+
+                await api("add_promotion", {
+                    method: "POST",
+                    body: body
+                });
+
+                showMessage(
+                    "Promotion added.",
+                    "success"
+                );
+            }
+
+
+            closeModal("promotionModal");
+
+            await loadData();
+
+        } catch (error) {
+
+            showMessage(
+                error.message,
+                "error"
+            );
+        }
+    }
+
+
+    /* ========================================================= */
+    /* USERS */
+    /* ========================================================= */
+
+    function renderUsers() {
+
+        const body =
+            document.getElementById("usersBody");
+
+
+        if (!users.length) {
+
+            body.innerHTML = `
+                <tr>
+                    <td colspan="5" class="empty">
+                        No users found.
+                    </td>
+                </tr>
+            `;
+
+            return;
+        }
+
+
+        body.innerHTML =
+            users.map(user => {
+
+                return `
+                    <tr>
+
+                        <td>
+                            ${escapeHtml(user.staff_name)}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(user.sales_man_code)}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(user.outlet)}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(user.role)}
+                        </td>
+
+                        <td>
+
+                            <button
+                                class="btn btn-danger btn-small"
+                                onclick="deleteUser(
+                                    '${escapeJs(user.sales_man_code)}'
+                                )"
+                            >
+                                Delete
+                            </button>
+
+                        </td>
+
+                    </tr>
+                `;
+
+            }).join("");
+    }
+
+
+    function openUserModal() {
+
+        document.getElementById("userName").value = "";
+        document.getElementById("userSMC").value = "";
+        document.getElementById("userOutlet").value = "";
+        document.getElementById("userRole").value = "staff";
+
+        showModal("userModal");
+    }
+
+
+    async function saveUser() {
+
+        const staffName =
+            document.getElementById("userName")
+                .value
+                .trim();
+
+        const smc =
+            document.getElementById("userSMC")
+                .value
+                .trim();
+
+        const outlet =
+            document.getElementById("userOutlet")
+                .value
+                .trim();
+
+        const role =
+            document.getElementById("userRole")
+                .value;
+
+
+        if (!staffName || !smc || !outlet) {
+
+            showMessage(
+                "Please fill in all user fields.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        try {
+
+            await api("add_user", {
+                method: "POST",
+                body: {
+                    staff_name: staffName,
+                    sales_man_code: smc,
+                    outlet: outlet,
+                    role: role
+                }
+            });
+
+
+            closeModal("userModal");
+
+            showMessage(
+                "User added.",
+                "success"
+            );
+
+            await loadData();
+
+        } catch (error) {
+
+            showMessage(
+                error.message,
+                "error"
+            );
+        }
+    }
+
+
+    async function deleteUser(smc) {
+
+        if (
+            !confirm(
+                "Delete user " +
+                smc +
+                "? This does not delete their submissions."
+            )
+        ) {
+            return;
+        }
+
+
+        try {
+
+            await api("delete_user", {
+                method: "POST",
+                body: {
+                    sales_man_code: smc
+                }
+            });
+
+
+            showMessage(
+                "User deleted.",
+                "success"
+            );
+
+            await loadData();
+
+        } catch (error) {
+
+            showMessage(
+                error.message,
+                "error"
+            );
+        }
+    }
+
+
+    /* ========================================================= */
+    /* EXPORT EXCEL */
+    /* ========================================================= */
+
+    function exportExcel() {
+
+        const rows =
+            currentFilteredSubmissions;
+
+
+        if (!rows.length) {
+
+            showMessage(
+                "There are no filtered rows to export.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        let html = `
+            <table border="1">
+
+                <tr>
+                    <th>ID</th>
+                    <th>SMC</th>
+                    <th>Staff</th>
+                    <th>Outlet</th>
+                    <th>Promotion</th>
+                    <th>Type</th>
+                    <th>Rate</th>
+                    <th>Qty</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+        `;
+
+
+        rows.forEach(s => {
+
+            const total =
+                Number(s.quantity || 0) *
+                Number(s.Rate || 0);
+
+
+            html += `
+                <tr>
+
+                    <td>${escapeHtml(s.incentive_id)}</td>
+
+                    <td>${escapeHtml(s.SMC)}</td>
+
+                    <td>${escapeHtml(s.staff_name)}</td>
+
+                    <td>${escapeHtml(s.outlet)}</td>
+
+                    <td>${escapeHtml(s.promo)}</td>
+
+                    <td>${escapeHtml(s.type)}</td>
+
+                    <td>${Number(s.Rate || 0).toFixed(2)}</td>
+
+                    <td>${escapeHtml(s.quantity)}</td>
+
+                    <td>${total.toFixed(2)}</td>
+
+                    <td>${escapeHtml(s.status)}</td>
+
+                    <td>${escapeHtml(s.submission_date)}</td>
+
+                </tr>
+            `;
+        });
+
+
+        html += "</table>";
+
+
+        const blob =
+            new Blob(
+                [
+                    "\ufeff" +
+                    html
+                ],
+                {
+                    type:
+                        "application/vnd.ms-excel"
+                }
+            );
+
+
+        const url =
+            URL.createObjectURL(blob);
+
+
+        const a =
+            document.createElement("a");
+
+        a.href = url;
+
+        a.download =
+            "incentive_submissions_" +
+            selectedMonth +
+            ".xls";
+
+        document.body.appendChild(a);
+
+        a.click();
+
+        a.remove();
+
+        URL.revokeObjectURL(url);
+    }
+
+
+    /* ========================================================= */
+    /* EXPORT PDF */
+    /* ========================================================= */
+
+    function exportPDF() {
+
+        if (!currentFilteredSubmissions.length) {
+
+            showMessage(
+                "There are no filtered rows to print.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        window.print();
+    }
+
+
+    /* ========================================================= */
+    /* LOGOUT */
+    /* ========================================================= */
+
+    function logout() {
+
+        window.location.href =
+            "index.php?action=logout";
+    }
+
+
+    /* ========================================================= */
+    /* INITIAL LOAD */
+    /* ========================================================= */
+
+    document.addEventListener("DOMContentLoaded", () => {
+
+        document.getElementById("dashboardMonth")
+            .value =
+            selectedMonth;
+
+
+        document.getElementById("monthlyMonth")
+            .value =
+            selectedMonth;
+
+
+        document.getElementById("top3Month")
+            .value =
+            selectedMonth;
+
+
+        document.getElementById("dashboardMonth")
+            .addEventListener(
+                "change",
+                function() {
+                    changeMonth(this.value);
+                }
+            );
+
+
+        loadData();
+    });
+
+</script>
+
+</body>
+</html>
