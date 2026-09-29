@@ -1,0 +1,931 @@
+<!-- ==================== DASHBOARD TAB ==================== -->
+<div id="dashboardTab" class="tab active">
+
+    <div class="section-header">
+        <div>
+            <h2>Dashboard</h2>
+            <p>Overview of incentive performance and recent submissions.</p>
+        </div>
+
+        <div class="month-control">
+            <label for="dashboardMonth">Month:</label>
+            <input type="month" id="dashboardMonth">
+        </div>
+    </div>
+
+    <!-- DASHBOARD CARDS -->
+    <div class="cards">
+
+        <div class="stat-card card-blue">
+            <div class="stat-title">Total Incentive</div>
+            <div class="stat-value" id="dashboardTotal">$0.00</div>
+            <div class="stat-sub">Approved incentives</div>
+        </div>
+
+        <div class="stat-card card-orange">
+            <div class="stat-title">Individual Incentive</div>
+            <div class="stat-value" id="dashboardIndividual">$0.00</div>
+            <div class="stat-sub">Approved individual</div>
+        </div>
+
+        <div class="stat-card card-teal">
+            <div class="stat-title">Bundle Incentive</div>
+            <div class="stat-value" id="dashboardBundle">$0.00</div>
+            <div class="stat-sub">Approved bundles</div>
+        </div>
+
+        <div class="stat-card card-purple">
+            <div class="stat-title">Pending</div>
+            <div class="stat-value" id="dashboardPending">0</div>
+            <div class="stat-sub">Awaiting approval</div>
+        </div>
+
+        <div class="stat-card card-green">
+            <div class="stat-title">Approved</div>
+            <div class="stat-value" id="dashboardApproved">0</div>
+            <div class="stat-sub">Approved submissions</div>
+        </div>
+
+        <div class="stat-card card-red">
+            <div class="stat-title">Rejected</div>
+            <div class="stat-value" id="dashboardRejected">0</div>
+            <div class="stat-sub">Rejected submissions</div>
+        </div>
+
+        <div class="stat-card card-gray">
+            <div class="stat-title">Total Staff</div>
+            <div class="stat-value" id="dashboardStaff">0</div>
+            <div class="stat-sub">Registered staff</div>
+        </div>
+
+    </div>
+
+
+    <!-- INCENTIVE BREAKDOWN -->
+    <div class="panel">
+
+        <div class="panel-title">
+            Incentive Breakdown
+        </div>
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Submissions</th>
+                        <th>Quantity</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    <tr>
+                        <td>
+                            <span class="type-badge">
+                                Individual
+                            </span>
+                        </td>
+
+                        <td id="dashboardIndividualCount">
+                            0
+                        </td>
+
+                        <td id="dashboardIndividualQty">
+                            0
+                        </td>
+
+                        <td class="money"
+                            id="dashboardIndividualAmount">
+                            $0.00
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            <span class="type-badge type-bundle">
+                                Bundle
+                            </span>
+                        </td>
+
+                        <td id="dashboardBundleCount">
+                            0
+                        </td>
+
+                        <td id="dashboardBundleQty">
+                            0
+                        </td>
+
+                        <td class="money"
+                            id="dashboardBundleAmount">
+                            $0.00
+                        </td>
+                    </tr>
+
+                    <tr class="breakdown-total">
+
+                        <td>
+                            Total
+                        </td>
+
+                        <td id="dashboardTotalCount">
+                            0
+                        </td>
+
+                        <td id="dashboardTotalQty">
+                            0
+                        </td>
+
+                        <td class="money"
+                            id="dashboardTotalAmount">
+                            $0.00
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+    <!-- RECENT SUBMISSIONS -->
+    <div class="panel">
+
+        <div class="panel-title">
+            Recent Submissions
+        </div>
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Staff</th>
+                        <th>Promotion</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody id="dashboardRecentSubmissions">
+
+                    <tr>
+                        <td colspan="6" class="loading">
+                            Loading recent submissions...
+                        </td>
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+/* =========================================================
+   DASHBOARD HELPERS
+   ========================================================= */
+
+function getPromoId(x) {
+
+    const raw =
+        x?.promo_id ??
+        x?.promotion_id ??
+        x?.promoId;
+
+    const n = Number(raw);
+
+    return Number.isFinite(n) ? n : null;
+}
+
+
+function getSubmissionId(x) {
+
+    const raw =
+        x?.incentive_id ??
+        x?.submission_id ??
+        x?.id;
+
+    const n = Number(raw);
+
+    return Number.isFinite(n) ? n : null;
+}
+
+
+function getType(x) {
+
+    const direct = String(
+        x?.type ??
+        x?.promotion_type ??
+        x?.promo_type ??
+        x?.promotionType ??
+        ""
+    ).trim();
+
+    const promoId = getPromoId(x);
+
+    /*
+     * Important:
+     * Resolve the type from the promotion table first.
+     */
+    if (promoId !== null && Array.isArray(state.promotions)) {
+
+        const promo = state.promotions.find(
+            p => getPromoId(p) === promoId
+        );
+
+        if (promo) {
+
+            const promoType = String(
+                promo?.type ??
+                promo?.promotion_type ??
+                promo?.promo_type ??
+                promo?.promotionType ??
+                ""
+            ).trim();
+
+            if (promoType) {
+                return promoType;
+            }
+        }
+    }
+
+    return direct;
+}
+
+
+function normalizedType(x) {
+
+    return getType(x)
+        .toLowerCase()
+        .replace(/[\s_-]/g, "");
+}
+
+
+function isBundle(x) {
+
+    const type = normalizedType(x);
+
+    return (
+        type === "bundle" ||
+        type === "outletbundle"
+    );
+}
+
+
+function displayType(x) {
+
+    if (isBundle(x)) {
+        return "Bundle";
+    }
+
+    return "Individual";
+}
+
+
+function getStatus(x) {
+
+    return String(
+        x?.status ??
+        x?.submission_status ??
+        ""
+    ).trim().toLowerCase();
+}
+
+
+function getQuantity(x) {
+
+    const quantity = Number(
+        x?.quantity ??
+        x?.qty ??
+        1
+    );
+
+    return Number.isFinite(quantity) && quantity > 0
+        ? quantity
+        : 1;
+}
+
+
+function getRate(x) {
+
+    const promoId = getPromoId(x);
+
+    /*
+     * Get the rate from the promotion table.
+     */
+    if (promoId !== null && Array.isArray(state.promotions)) {
+
+        const promo = state.promotions.find(
+            p => getPromoId(p) === promoId
+        );
+
+        if (promo) {
+
+            const rate = Number(
+                promo?.Rate ??
+                promo?.rate ??
+                0
+            );
+
+            if (Number.isFinite(rate)) {
+                return rate;
+            }
+        }
+    }
+
+    /*
+     * Fallback if backend already sends rate.
+     */
+    const rate = Number(
+        x?.Rate ??
+        x?.rate ??
+        0
+    );
+
+    return Number.isFinite(rate) ? rate : 0;
+}
+
+
+function getSubmissionDate(x) {
+
+    return String(
+        x?.submission_date ??
+        x?.submitted_at ??
+        x?.created_at ??
+        x?.date ??
+        ""
+    ).trim();
+}
+
+
+function formatMoney(amount) {
+
+    const value = Number(amount) || 0;
+
+    return "$" + value.toFixed(2);
+}
+
+
+/* =========================================================
+   STAFF NAME
+   ========================================================= */
+
+function getStaffName(submission) {
+
+    return (
+        submission?.staff_name ??
+        submission?.name ??
+        submission?.staff ??
+        submission?.SMC ??
+        submission?.sales_man_code ??
+        "-"
+    );
+}
+
+
+/* =========================================================
+   PROMOTION NAME
+   ========================================================= */
+
+function getPromotionName(submission) {
+
+    const promoId = getPromoId(submission);
+
+    if (promoId !== null && Array.isArray(state.promotions)) {
+
+        const promotion = state.promotions.find(
+            p => getPromoId(p) === promoId
+        );
+
+        if (promotion) {
+
+            return (
+                promotion?.promo ??
+                promotion?.promotion_name ??
+                promotion?.name ??
+                "-"
+            );
+        }
+    }
+
+    return (
+        submission?.promo ??
+        submission?.promotion ??
+        submission?.promotion_name ??
+        "-"
+    );
+}
+
+
+/* =========================================================
+   DASHBOARD CALCULATION
+   ========================================================= */
+
+function calculateDashboardStats(submissions) {
+
+    let individualAmount = 0;
+    let bundleAmount = 0;
+
+    let individualCount = 0;
+    let bundleCount = 0;
+
+    let individualQty = 0;
+    let bundleQty = 0;
+
+    let pending = 0;
+    let approved = 0;
+    let rejected = 0;
+
+    submissions.forEach(submission => {
+
+        const status = getStatus(submission);
+
+        const quantity = getQuantity(submission);
+        const rate = getRate(submission);
+
+        const amount = quantity * rate;
+
+        if (status === "approved") {
+
+            approved++;
+
+            if (isBundle(submission)) {
+
+                bundleCount++;
+                bundleQty += quantity;
+                bundleAmount += amount;
+
+            } else {
+
+                individualCount++;
+                individualQty += quantity;
+                individualAmount += amount;
+            }
+
+        } else if (status === "pending") {
+
+            pending++;
+
+        } else if (status === "rejected") {
+
+            rejected++;
+        }
+    });
+
+    return {
+
+        individualAmount,
+        bundleAmount,
+
+        totalAmount:
+            individualAmount +
+            bundleAmount,
+
+        individualCount,
+        bundleCount,
+
+        individualQty,
+        bundleQty,
+
+        totalCount:
+            individualCount +
+            bundleCount,
+
+        totalQty:
+            individualQty +
+            bundleQty,
+
+        pending,
+        approved,
+        rejected
+    };
+}
+
+
+/* =========================================================
+   RECENT SUBMISSIONS
+   ========================================================= */
+
+function renderRecentSubmissions(submissions) {
+
+    const tbody =
+        document.getElementById(
+            "dashboardRecentSubmissions"
+        );
+
+    if (!tbody) {
+        return;
+    }
+
+    /*
+     * Sort newest first.
+     */
+    const recent = [...submissions]
+        .sort((a, b) => {
+
+            const dateA =
+                new Date(getSubmissionDate(a)).getTime() || 0;
+
+            const dateB =
+                new Date(getSubmissionDate(b)).getTime() || 0;
+
+            return dateB - dateA;
+        })
+        .slice(0, 10);
+
+
+    if (recent.length === 0) {
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="empty">
+                    No submissions found.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+
+    tbody.innerHTML = recent.map(submission => {
+
+        const id =
+            getSubmissionId(submission) ?? "-";
+
+        const staff =
+            getStaffName(submission);
+
+        const promotion =
+            getPromotionName(submission);
+
+        const type =
+            displayType(submission);
+
+        const quantity =
+            getQuantity(submission);
+
+        const rate =
+            getRate(submission);
+
+        const amount =
+            quantity * rate;
+
+        const status =
+            getStatus(submission);
+
+
+        let statusClass =
+            "status-default";
+
+        if (status === "approved") {
+            statusClass = "status-approved";
+        } else if (status === "pending") {
+            statusClass = "status-pending";
+        } else if (status === "rejected") {
+            statusClass = "status-rejected";
+        }
+
+
+        const statusText =
+            status
+                ? status.charAt(0).toUpperCase() +
+                  status.slice(1)
+                : "-";
+
+
+        return `
+            <tr>
+
+                <td>
+                    ${escapeHtml(String(id))}
+                </td>
+
+                <td>
+                    ${escapeHtml(String(staff))}
+                </td>
+
+                <td>
+                    ${escapeHtml(String(promotion))}
+                </td>
+
+                <td>
+                    <span class="type-badge ${isBundle(submission) ? "type-bundle" : ""}">
+                        ${escapeHtml(type)}
+                    </span>
+                </td>
+
+                <td class="money">
+                    ${formatMoney(amount)}
+                </td>
+
+                <td>
+                    <span class="status ${statusClass}">
+                        ${escapeHtml(statusText)}
+                    </span>
+                </td>
+
+            </tr>
+        `;
+
+    }).join("");
+}
+
+
+/* =========================================================
+   ESCAPE HTML
+   ========================================================= */
+
+function escapeHtml(value) {
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+/* =========================================================
+   RENDER DASHBOARD
+   ========================================================= */
+
+function renderDashboard() {
+
+    const submissions =
+        Array.isArray(state.submissions)
+            ? state.submissions
+            : [];
+
+
+    const stats =
+        calculateDashboardStats(submissions);
+
+
+    /*
+     * Main cards
+     */
+
+    document.getElementById("dashboardTotal").textContent =
+        formatMoney(stats.totalAmount);
+
+    document.getElementById("dashboardIndividual").textContent =
+        formatMoney(stats.individualAmount);
+
+    document.getElementById("dashboardBundle").textContent =
+        formatMoney(stats.bundleAmount);
+
+    document.getElementById("dashboardPending").textContent =
+        stats.pending;
+
+    document.getElementById("dashboardApproved").textContent =
+        stats.approved;
+
+    document.getElementById("dashboardRejected").textContent =
+        stats.rejected;
+
+
+    /*
+     * Total staff
+     */
+
+    const staffCount =
+        Array.isArray(state.users)
+            ? state.users.length
+            : 0;
+
+    document.getElementById("dashboardStaff").textContent =
+        staffCount;
+
+
+    /*
+     * Breakdown table
+     */
+
+    document.getElementById(
+        "dashboardIndividualCount"
+    ).textContent =
+        stats.individualCount;
+
+
+    document.getElementById(
+        "dashboardIndividualQty"
+    ).textContent =
+        stats.individualQty;
+
+
+    document.getElementById(
+        "dashboardIndividualAmount"
+    ).textContent =
+        formatMoney(stats.individualAmount);
+
+
+    document.getElementById(
+        "dashboardBundleCount"
+    ).textContent =
+        stats.bundleCount;
+
+
+    document.getElementById(
+        "dashboardBundleQty"
+    ).textContent =
+        stats.bundleQty;
+
+
+    document.getElementById(
+        "dashboardBundleAmount"
+    ).textContent =
+        formatMoney(stats.bundleAmount);
+
+
+    document.getElementById(
+        "dashboardTotalCount"
+    ).textContent =
+        stats.totalCount;
+
+
+    document.getElementById(
+        "dashboardTotalQty"
+    ).textContent =
+        stats.totalQty;
+
+
+    document.getElementById(
+        "dashboardTotalAmount"
+    ).textContent =
+        formatMoney(stats.totalAmount);
+
+
+    /*
+     * Recent submissions
+     */
+
+    renderRecentSubmissions(submissions);
+}
+
+
+/* =========================================================
+   MONTH FILTER
+   ========================================================= */
+
+function calculateDashboardStatsForMonth(month) {
+
+    const submissions =
+        Array.isArray(state.submissions)
+            ? state.submissions
+            : [];
+
+
+    if (!month) {
+        return submissions;
+    }
+
+
+    return submissions.filter(submission => {
+
+        const date =
+            getSubmissionDate(submission);
+
+        if (!date) {
+            return false;
+        }
+
+        return date.substring(0, 7) === month;
+    });
+}
+
+
+function renderDashboardWithMonth() {
+
+    const monthInput =
+        document.getElementById("dashboardMonth");
+
+    const month =
+        monthInput?.value || "";
+
+
+    /*
+     * If no month is selected,
+     * show all dashboard data.
+     */
+
+    const filtered =
+        calculateDashboardStatsForMonth(month);
+
+
+    const stats =
+        calculateDashboardStats(filtered);
+
+
+    document.getElementById("dashboardTotal").textContent =
+        formatMoney(stats.totalAmount);
+
+    document.getElementById("dashboardIndividual").textContent =
+        formatMoney(stats.individualAmount);
+
+    document.getElementById("dashboardBundle").textContent =
+        formatMoney(stats.bundleAmount);
+
+    document.getElementById("dashboardPending").textContent =
+        stats.pending;
+
+    document.getElementById("dashboardApproved").textContent =
+        stats.approved;
+
+    document.getElementById("dashboardRejected").textContent =
+        stats.rejected;
+
+
+    const staffCount =
+        Array.isArray(state.users)
+            ? state.users.length
+            : 0;
+
+    document.getElementById("dashboardStaff").textContent =
+        staffCount;
+
+
+    document.getElementById(
+        "dashboardIndividualCount"
+    ).textContent =
+        stats.individualCount;
+
+    document.getElementById(
+        "dashboardIndividualQty"
+    ).textContent =
+        stats.individualQty;
+
+    document.getElementById(
+        "dashboardIndividualAmount"
+    ).textContent =
+        formatMoney(stats.individualAmount);
+
+
+    document.getElementById(
+        "dashboardBundleCount"
+    ).textContent =
+        stats.bundleCount;
+
+    document.getElementById(
+        "dashboardBundleQty"
+    ).textContent =
+        stats.bundleQty;
+
+    document.getElementById(
+        "dashboardBundleAmount"
+    ).textContent =
+        formatMoney(stats.bundleAmount);
+
+
+    document.getElementById(
+        "dashboardTotalCount"
+    ).textContent =
+        stats.totalCount;
+
+    document.getElementById(
+        "dashboardTotalQty"
+    ).textContent =
+        stats.totalQty;
+
+    document.getElementById(
+        "dashboardTotalAmount"
+    ).textContent =
+        formatMoney(stats.totalAmount);
+
+
+    /*
+     * Recent submissions follows the selected month.
+     */
+
+    renderRecentSubmissions(filtered);
+}
+
+
+/* =========================================================
+   MONTH CHANGE
+   ========================================================= */
+
+document.addEventListener("change", function(e) {
+
+    if (e.target.id === "dashboardMonth") {
+        renderDashboardWithMonth();
+    }
+
+});
