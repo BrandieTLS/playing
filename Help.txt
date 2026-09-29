@@ -1,0 +1,3394 @@
+<?php
+
+/*
+|--------------------------------------------------------------------------
+| SESSION
+|--------------------------------------------------------------------------
+*/
+
+session_start();
+
+
+/*
+|--------------------------------------------------------------------------
+| OUTPUT / JSON PROTECTION
+|--------------------------------------------------------------------------
+|
+| Prevent PHP warnings/notices from being mixed into JSON responses.
+|
+*/
+
+ob_start();
+
+ini_set("display_errors", "0");
+ini_set("display_startup_errors", "0");
+ini_set("log_errors", "1");
+
+header("Content-Type: application/json; charset=UTF-8");
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Pragma: no-cache");
+
+
+/*
+|--------------------------------------------------------------------------
+| DATABASE CONFIGURATION
+|--------------------------------------------------------------------------
+|
+| CHANGE THESE VALUES.
+|
+*/
+
+$host = "YOUR_HOST";
+$port = 4003;
+$username = "YOUR_USERNAME";
+$password = "YOUR_PASSWORD";
+$dbname = "incentive";
+
+
+/*
+|--------------------------------------------------------------------------
+| RESPONSE FUNCTION
+|--------------------------------------------------------------------------
+|
+| IMPORTANT:
+| This must be declared BEFORE it is used.
+|
+*/
+
+function response($data, $status = 200)
+{
+    http_response_code($status);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Remove anything accidentally printed before JSON
+    |--------------------------------------------------------------------------
+    */
+
+    if (ob_get_length()) {
+        ob_clean();
+    }
+
+    echo json_encode(
+        $data,
+        JSON_UNESCAPED_UNICODE |
+        JSON_UNESCAPED_SLASHES
+    );
+
+    exit;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| DATABASE CONNECTION
+|--------------------------------------------------------------------------
+*/
+
+$conn = mysqli_init();
+
+mysqli_ssl_set(
+    $conn,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+);
+
+
+if (
+    !mysqli_real_connect(
+        $conn,
+        $host,
+        $username,
+        $password,
+        $dbname,
+        $port,
+        NULL,
+        MYSQLI_CLIENT_SSL
+    )
+) {
+
+    response([
+        "success" => false,
+        "message" =>
+            "Database connection failed: " .
+            mysqli_connect_error()
+    ], 500);
+}
+
+
+mysqli_set_charset(
+    $conn,
+    "utf8mb4"
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| SESSION INFORMATION
+|--------------------------------------------------------------------------
+*/
+
+$sessionRole =
+    $_SESSION["role"]
+    ??
+    (
+        $_SESSION["user"]["role"]
+        ??
+        ""
+    );
+
+
+$sessionName =
+    $_SESSION["staff_name"]
+    ??
+    (
+        $_SESSION["user"]["staff_name"]
+        ??
+        "Admin"
+    );
+
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN SESSION CONTROL
+|--------------------------------------------------------------------------
+*/
+
+$REQUIRE_ADMIN_SESSION = true;
+
+
+/*
+|--------------------------------------------------------------------------
+| ACTION
+|--------------------------------------------------------------------------
+*/
+
+$action =
+    $_GET["action"]
+    ??
+    "";
+
+
+/*
+|--------------------------------------------------------------------------
+| LOGOUT
+|--------------------------------------------------------------------------
+|
+| Logout MUST happen before the admin-session check.
+|
+*/
+
+if ($action === "logout") {
+
+    $_SESSION = [];
+
+
+    if (
+        ini_get("session.use_cookies")
+    ) {
+
+        $params =
+            session_get_cookie_params();
+
+        setcookie(
+            session_name(),
+            "",
+            time() - 42000,
+            $params["path"],
+            $params["domain"],
+            $params["secure"],
+            $params["httponly"]
+        );
+    }
+
+
+    session_destroy();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Logout is also JSON because frontend fetch() expects JSON.
+    |--------------------------------------------------------------------------
+    */
+
+    response([
+        "success" => true,
+        "message" => "Logged out.",
+        "redirect" => "index.html"
+    ]);
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN ACCESS CHECK
+|--------------------------------------------------------------------------
+*/
+
+if ($REQUIRE_ADMIN_SESSION) {
+
+    if (
+        strtolower(
+            (string)$sessionRole
+        ) !== "admin"
+    ) {
+
+        response([
+            "success" => false,
+            "message" =>
+                "Admin access required."
+        ], 403);
+    }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| GET JSON INPUT
+|--------------------------------------------------------------------------
+*/
+
+function getJsonInput()
+{
+    $raw =
+        file_get_contents(
+            "php://input"
+        );
+
+
+    if (!$raw) {
+        return [];
+    }
+
+
+    $data =
+        json_decode(
+            $raw,
+            true
+        );
+
+
+    if (
+        json_last_error() !==
+        JSON_ERROR_NONE
+    ) {
+
+        response([
+            "success" => false,
+            "message" =>
+                "Invalid JSON request: " .
+                json_last_error_msg()
+        ], 400);
+    }
+
+
+    return is_array($data)
+        ? $data
+        : [];
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| REQUIRED FIELD
+|--------------------------------------------------------------------------
+*/
+
+function requireField(
+    $data,
+    $field
+) {
+
+    if (
+        !isset($data[$field]) ||
+        trim(
+            (string)$data[$field]
+        ) === ""
+    ) {
+
+        response([
+            "success" => false,
+            "message" =>
+                "Missing required field: " .
+                $field
+        ], 400);
+    }
+
+
+    return trim(
+        (string)$data[$field]
+    );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| PROMOTION STATUS
+|--------------------------------------------------------------------------
+*/
+
+function calculatePromotionStatus(
+    $startDate,
+    $endDate
+) {
+
+    $today =
+        date("Y-m-d");
+
+
+    if (
+        !$startDate ||
+        !$endDate
+    ) {
+
+        return "Active";
+    }
+
+
+    if ($endDate < $today) {
+
+        return "Expired";
+    }
+
+
+    if ($startDate > $today) {
+
+        return "Upcoming";
+    }
+
+
+    return "Active";
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| SYNC PROMOTION STATUS
+|--------------------------------------------------------------------------
+*/
+
+function syncPromotionStatuses($db)
+{
+    $sql = "
+        UPDATE Incentives_information
+
+        SET status =
+            CASE
+
+                WHEN end_date IS NOT NULL
+                     AND end_date < CURDATE()
+                    THEN 'Expired'
+
+                WHEN start_date IS NOT NULL
+                     AND start_date > CURDATE()
+                    THEN 'Upcoming'
+
+                ELSE 'Active'
+
+            END
+    ";
+
+
+    $result =
+        $db->query($sql);
+
+
+    if (!$result) {
+
+        response([
+            "success" => false,
+            "message" =>
+                "Failed to sync promotion statuses: " .
+                $db->error
+        ], 500);
+    }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| MONTH
+|--------------------------------------------------------------------------
+*/
+
+function normalizeMonth($month)
+{
+    if (
+        !$month ||
+        !preg_match(
+            '/^\d{4}-\d{2}$/',
+            $month
+        )
+    ) {
+
+        return date("Y-m");
+    }
+
+
+    return $month;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| MONTH RANGE
+|--------------------------------------------------------------------------
+*/
+
+function getMonthRange($month)
+{
+    $start =
+        DateTime::createFromFormat(
+            "Y-m-d",
+            $month . "-01"
+        );
+
+
+    if (!$start) {
+
+        $start =
+            new DateTime(
+                date("Y-m-01")
+            );
+    }
+
+
+    $end =
+        clone $start;
+
+    $end->modify("+1 month");
+
+
+    return [
+        $start->format("Y-m-d"),
+        $end->format("Y-m-d")
+    ];
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| FETCH SUBMISSIONS
+|--------------------------------------------------------------------------
+|
+| IMPORTANT:
+| staff_incentives.SMC
+| joins to
+| staff_details.sales_man_code
+|
+*/
+
+function fetchSubmissions($db)
+{
+
+    $sql = "
+        SELECT
+
+            si.incentive_id,
+
+            si.SMC AS sales_man_code,
+
+            sd.staff_name,
+
+            sd.outlet,
+
+            si.promo_id,
+
+            ii.promo,
+
+            ii.Rate,
+
+            ii.type,
+
+            ii.start_date,
+
+            ii.end_date,
+
+            ii.status AS promo_status,
+
+            si.quantity,
+
+            si.status,
+
+            si.submission_date,
+
+            si.proof,
+
+            si.rejection_reason,
+
+            bi.item_1,
+
+            bi.item_2,
+
+            bi.item_3,
+
+            bi.item_4,
+
+            bi.item_5
+
+        FROM staff_incentives si
+
+        LEFT JOIN staff_details sd
+            ON sd.sales_man_code =
+               si.SMC
+
+        LEFT JOIN Incentives_information ii
+            ON ii.promo_id =
+               si.promo_id
+
+        LEFT JOIN Bundle_information bi
+            ON bi.promo_id =
+               si.promo_id
+
+        ORDER BY
+            si.submission_date DESC,
+            si.incentive_id DESC
+    ";
+
+
+    $result =
+        $db->query($sql);
+
+
+    if (!$result) {
+
+        response([
+            "success" => false,
+            "message" =>
+                "Failed to fetch submissions: " .
+                $db->error
+        ], 500);
+    }
+
+
+    $rows = [];
+
+
+    while (
+        $row =
+        $result->fetch_assoc()
+    ) {
+
+        $row["quantity"] =
+            (int)$row["quantity"];
+
+
+        $row["Rate"] =
+            (float)$row["Rate"];
+
+
+        $rows[] =
+            $row;
+    }
+
+
+    $result->free();
+
+
+    return $rows;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| FETCH PROMOTIONS
+|--------------------------------------------------------------------------
+*/
+
+function fetchPromotions($db)
+{
+
+    $sql = "
+        SELECT
+
+            ii.promo_id,
+
+            ii.promo,
+
+            ii.Rate,
+
+            ii.type,
+
+            ii.start_date,
+
+            ii.end_date,
+
+            ii.status,
+
+            bi.item_1,
+
+            bi.item_2,
+
+            bi.item_3,
+
+            bi.item_4,
+
+            bi.item_5
+
+        FROM Incentives_information ii
+
+        LEFT JOIN Bundle_information bi
+            ON bi.promo_id =
+               ii.promo_id
+
+        ORDER BY
+            ii.promo_id DESC
+    ";
+
+
+    $result =
+        $db->query($sql);
+
+
+    if (!$result) {
+
+        response([
+            "success" => false,
+            "message" =>
+                "Failed to fetch promotions: " .
+                $db->error
+        ], 500);
+    }
+
+
+    $rows = [];
+
+
+    while (
+        $row =
+        $result->fetch_assoc()
+    ) {
+
+        $row["Rate"] =
+            (float)$row["Rate"];
+
+
+        $rows[] =
+            $row;
+    }
+
+
+    $result->free();
+
+
+    return $rows;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| FETCH USERS
+|--------------------------------------------------------------------------
+*/
+
+function fetchUsers($db)
+{
+
+    $sql = "
+        SELECT
+
+            staff_name,
+
+            sales_man_code,
+
+            outlet,
+
+            role
+
+        FROM staff_details
+
+        ORDER BY
+            staff_name ASC
+    ";
+
+
+    $result =
+        $db->query($sql);
+
+
+    if (!$result) {
+
+        response([
+            "success" => false,
+            "message" =>
+                "Failed to fetch users: " .
+                $db->error
+        ], 500);
+    }
+
+
+    $rows = [];
+
+
+    while (
+        $row =
+        $result->fetch_assoc()
+    ) {
+
+        $rows[] =
+            $row;
+    }
+
+
+    $result->free();
+
+
+    return $rows;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| FILTER MONTH
+|--------------------------------------------------------------------------
+*/
+
+function rowsForMonth(
+    $rows,
+    $month
+) {
+
+    return array_values(
+        array_filter(
+            $rows,
+            function ($row) use ($month) {
+
+                return substr(
+                    (string)(
+                        $row["submission_date"]
+                        ?? ""
+                    ),
+                    0,
+                    7
+                ) === $month;
+            }
+        )
+    );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| DASHBOARD
+|--------------------------------------------------------------------------
+*/
+
+function buildDashboard(
+    $rows,
+    $month,
+    $staffCount
+) {
+
+    $monthRows =
+        rowsForMonth(
+            $rows,
+            $month
+        );
+
+
+    $total =
+        count($monthRows);
+
+
+    $pending = 0;
+
+    $approved = 0;
+
+    $rejected = 0;
+
+    $approvedIndividual = 0;
+
+    $bundlePool = 0;
+
+
+    foreach (
+        $monthRows as $row
+    ) {
+
+        $status =
+            strtolower(
+                (string)(
+                    $row["status"]
+                    ?? ""
+                )
+            );
+
+
+        $type =
+            strtolower(
+                (string)(
+                    $row["type"]
+                    ?? ""
+                )
+            );
+
+
+        $quantity =
+            (float)(
+                $row["quantity"]
+                ?? 0
+            );
+
+
+        $rate =
+            (float)(
+                $row["Rate"]
+                ?? 0
+            );
+
+
+        if (
+            $status ===
+            "pending"
+        ) {
+
+            $pending++;
+        }
+
+
+        if (
+            $status ===
+            "approved"
+        ) {
+
+            $approved++;
+
+
+            $amount =
+                $quantity *
+                $rate;
+
+
+            if (
+                $type ===
+                "individual"
+            ) {
+
+                $approvedIndividual +=
+                    $amount;
+
+            } elseif (
+                $type ===
+                "outlet_bundle"
+            ) {
+
+                $bundlePool +=
+                    $amount;
+            }
+        }
+
+
+        if (
+            $status ===
+            "rejected"
+        ) {
+
+            $rejected++;
+        }
+    }
+
+
+    return [
+
+        "totalSubmissions" =>
+            $total,
+
+        "pending" =>
+            $pending,
+
+        "approved" =>
+            $approved,
+
+        "rejected" =>
+            $rejected,
+
+        "approvedIndividual" =>
+            round(
+                $approvedIndividual,
+                2
+            ),
+
+        "bundlePool" =>
+            round(
+                $bundlePool,
+                2
+            ),
+
+        "staffCount" =>
+            $staffCount
+    ];
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| MONTHLY SUMMARY
+|--------------------------------------------------------------------------
+*/
+
+function buildMonthlySummary(
+    $rows,
+    $month
+) {
+
+    $monthRows =
+        rowsForMonth(
+            $rows,
+            $month
+        );
+
+
+    $individual = [];
+
+    $bundle = [];
+
+
+    foreach (
+        $monthRows as $row
+    ) {
+
+        if (
+            strtolower(
+                (string)(
+                    $row["status"]
+                    ?? ""
+                )
+            ) !==
+            "approved"
+        ) {
+
+            continue;
+        }
+
+
+        $type =
+            strtolower(
+                (string)(
+                    $row["type"]
+                    ?? ""
+                )
+            );
+
+
+        $quantity =
+            (float)(
+                $row["quantity"]
+                ?? 0
+            );
+
+
+        $rate =
+            (float)(
+                $row["Rate"]
+                ?? 0
+            );
+
+
+        $amount =
+            $quantity *
+            $rate;
+
+
+        if (
+            $type ===
+            "individual"
+        ) {
+
+            $key =
+                (string)(
+                    $row["sales_man_code"]
+                    ?? ""
+                );
+
+
+            if (
+                !isset(
+                    $individual[$key]
+                )
+            ) {
+
+                $individual[$key] = [
+
+                    "sales_man_code" =>
+                        $row["sales_man_code"],
+
+                    "staff_name" =>
+                        $row["staff_name"],
+
+                    "outlet" =>
+                        $row["outlet"],
+
+                    "quantity" =>
+                        0,
+
+                    "incentive" =>
+                        0
+                ];
+            }
+
+
+            $individual[$key]["quantity"] +=
+                $quantity;
+
+
+            $individual[$key]["incentive"] +=
+                $amount;
+        }
+
+
+        if (
+            $type ===
+            "outlet_bundle"
+        ) {
+
+            $key =
+                (string)(
+                    $row["outlet"]
+                    ?? ""
+                );
+
+
+            if (
+                !isset(
+                    $bundle[$key]
+                )
+            ) {
+
+                $bundle[$key] = [
+
+                    "outlet" =>
+                        $row["outlet"],
+
+                    "quantity" =>
+                        0,
+
+                    "incentive" =>
+                        0
+                ];
+            }
+
+
+            $bundle[$key]["quantity"] +=
+                $quantity;
+
+
+            $bundle[$key]["incentive"] +=
+                $amount;
+        }
+    }
+
+
+    $individual =
+        array_values(
+            $individual
+        );
+
+
+    $bundle =
+        array_values(
+            $bundle
+        );
+
+
+    usort(
+        $individual,
+        function ($a, $b) {
+
+            $compare =
+                $b["incentive"]
+                <=>
+                $a["incentive"];
+
+
+            if (
+                $compare !== 0
+            ) {
+
+                return $compare;
+            }
+
+
+            return strcmp(
+                (string)$a["staff_name"],
+                (string)$b["staff_name"]
+            );
+        }
+    );
+
+
+    usort(
+        $bundle,
+        function ($a, $b) {
+
+            return
+                $b["incentive"]
+                <=>
+                $a["incentive"];
+        }
+    );
+
+
+    $totalIndividual = 0;
+
+    $totalBundle = 0;
+
+
+    foreach (
+        $individual as $row
+    ) {
+
+        $totalIndividual +=
+            $row["incentive"];
+    }
+
+
+    foreach (
+        $bundle as $row
+    ) {
+
+        $totalBundle +=
+            $row["incentive"];
+    }
+
+
+    foreach (
+        $individual as &$row
+    ) {
+
+        $row["quantity"] =
+            (int)$row["quantity"];
+
+
+        $row["incentive"] =
+            round(
+                $row["incentive"],
+                2
+            );
+    }
+
+    unset($row);
+
+
+    foreach (
+        $bundle as &$row
+    ) {
+
+        $row["quantity"] =
+            (int)$row["quantity"];
+
+
+        $row["incentive"] =
+            round(
+                $row["incentive"],
+                2
+            );
+    }
+
+    unset($row);
+
+
+    return [
+
+        "individual" =>
+            $individual,
+
+        "bundle" =>
+            $bundle,
+
+        "totalIndividual" =>
+            round(
+                $totalIndividual,
+                2
+            ),
+
+        "totalBundle" =>
+            round(
+                $totalBundle,
+                2
+            ),
+
+        "grandTotal" =>
+            round(
+                $totalIndividual +
+                $totalBundle,
+                2
+            )
+    ];
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| TOP 3
+|--------------------------------------------------------------------------
+*/
+
+function buildTop3(
+    $rows,
+    $month
+) {
+
+    $monthRows =
+        rowsForMonth(
+            $rows,
+            $month
+        );
+
+
+    $staff = [];
+
+    $bundlePool = 0;
+
+
+    foreach (
+        $monthRows as $row
+    ) {
+
+        if (
+            strtolower(
+                (string)(
+                    $row["status"]
+                    ?? ""
+                )
+            ) !==
+            "approved"
+        ) {
+
+            continue;
+        }
+
+
+        $type =
+            strtolower(
+                (string)(
+                    $row["type"]
+                    ?? ""
+                )
+            );
+
+
+        $quantity =
+            (float)(
+                $row["quantity"]
+                ?? 0
+            );
+
+
+        $rate =
+            (float)(
+                $row["Rate"]
+                ?? 0
+            );
+
+
+        $amount =
+            $quantity *
+            $rate;
+
+
+        if (
+            $type ===
+            "outlet_bundle"
+        ) {
+
+            $bundlePool +=
+                $amount;
+
+            continue;
+        }
+
+
+        if (
+            $type !==
+            "individual"
+        ) {
+
+            continue;
+        }
+
+
+        $smc =
+            (string)(
+                $row["sales_man_code"]
+                ?? ""
+            );
+
+
+        if (
+            !isset(
+                $staff[$smc]
+            )
+        ) {
+
+            $staff[$smc] = [
+
+                "sales_man_code" =>
+                    $smc,
+
+                "staff_name" =>
+                    $row["staff_name"],
+
+                "outlet" =>
+                    $row["outlet"],
+
+                "individual_incentive" =>
+                    0
+            ];
+        }
+
+
+        $staff[$smc]["individual_incentive"] +=
+            $amount;
+    }
+
+
+    usort(
+        $staff,
+        function ($a, $b) {
+
+            $compare =
+                $b["individual_incentive"]
+                <=>
+                $a["individual_incentive"];
+
+
+            if (
+                $compare !== 0
+            ) {
+
+                return $compare;
+            }
+
+
+            $nameCompare =
+                strcmp(
+                    (string)$a["staff_name"],
+                    (string)$b["staff_name"]
+                );
+
+
+            if (
+                $nameCompare !== 0
+            ) {
+
+                return $nameCompare;
+            }
+
+
+            return strcmp(
+                (string)$a["sales_man_code"],
+                (string)$b["sales_man_code"]
+            );
+        }
+    );
+
+
+    $top3 =
+        array_slice(
+            $staff,
+            0,
+            3
+        );
+
+
+    $shareRates = [
+
+        1 => 0.50,
+
+        2 => 0.35,
+
+        3 => 0.15
+    ];
+
+
+    foreach (
+        $top3 as $index =>
+        &$person
+    ) {
+
+        $rank =
+            $index + 1;
+
+
+        $person["rank"] =
+            $rank;
+
+
+        if ($rank === 1) {
+
+            $person["rank_label"] =
+                "1st Place";
+
+        } elseif (
+            $rank === 2
+        ) {
+
+            $person["rank_label"] =
+                "2nd Place";
+
+        } else {
+
+            $person["rank_label"] =
+                "3rd Place";
+        }
+
+
+        $person["individual_incentive"] =
+            round(
+                $person["individual_incentive"],
+                2
+            );
+
+
+        $person["bundle_pool"] =
+            round(
+                $bundlePool,
+                2
+            );
+
+
+        $person["bundle_share"] =
+            round(
+                $bundlePool *
+                $shareRates[$rank],
+                2
+            );
+
+
+        $person["total_payout"] =
+            round(
+                $person["individual_incentive"] +
+                $person["bundle_share"],
+                2
+            );
+    }
+
+    unset($person);
+
+
+    $rankBySMC = [];
+
+
+    foreach (
+        $top3 as $person
+    ) {
+
+        $rankBySMC[
+            (string)$person["sales_man_code"]
+        ] =
+            (int)$person["rank"];
+    }
+
+
+    $breakdown = [];
+
+
+    foreach (
+        $monthRows as $row
+    ) {
+
+        if (
+            strtolower(
+                (string)(
+                    $row["status"]
+                    ?? ""
+                )
+            ) !==
+            "approved"
+        ) {
+
+            continue;
+        }
+
+
+        if (
+            strtolower(
+                (string)(
+                    $row["type"]
+                    ?? ""
+                )
+            ) !==
+            "individual"
+        ) {
+
+            continue;
+        }
+
+
+        $smc =
+            (string)(
+                $row["sales_man_code"]
+                ?? ""
+            );
+
+
+        if (
+            !isset(
+                $rankBySMC[$smc]
+            )
+        ) {
+
+            continue;
+        }
+
+
+        $quantity =
+            (float)(
+                $row["quantity"]
+                ?? 0
+            );
+
+
+        $rate =
+            (float)(
+                $row["Rate"]
+                ?? 0
+            );
+
+
+        $breakdown[] = [
+
+            "rank" =>
+                $rankBySMC[$smc],
+
+            "sales_man_code" =>
+                $smc,
+
+            "staff_name" =>
+                $row["staff_name"],
+
+            "outlet" =>
+                $row["outlet"],
+
+            "promo_id" =>
+                $row["promo_id"],
+
+            "promo" =>
+                $row["promo"],
+
+            "type" =>
+                $row["type"],
+
+            "Rate" =>
+                $rate,
+
+            "quantity" =>
+                $quantity,
+
+            "incentive" =>
+                $quantity * $rate
+        ];
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | GROUP TOP 3 PROMOTION BREAKDOWN
+    |--------------------------------------------------------------------------
+    */
+
+    $grouped = [];
+
+
+    foreach (
+        $breakdown as $row
+    ) {
+
+        $key =
+            $row["sales_man_code"]
+            . "|"
+            . $row["promo_id"];
+
+
+        if (
+            !isset(
+                $grouped[$key]
+            )
+        ) {
+
+            $grouped[$key] =
+                $row;
+
+        } else {
+
+            $grouped[$key]["quantity"] +=
+                $row["quantity"];
+
+
+            $grouped[$key]["incentive"] +=
+                $row["incentive"];
+        }
+    }
+
+
+    $breakdown =
+        array_values(
+            $grouped
+        );
+
+
+    usort(
+        $breakdown,
+        function ($a, $b) {
+
+            if (
+                $a["rank"] !==
+                $b["rank"]
+            ) {
+
+                return
+                    $a["rank"]
+                    <=>
+                    $b["rank"];
+            }
+
+
+            return
+                $b["incentive"]
+                <=>
+                $a["incentive"];
+        }
+    );
+
+
+    foreach (
+        $breakdown as &$row
+    ) {
+
+        $row["Rate"] =
+            round(
+                $row["Rate"],
+                2
+            );
+
+
+        $row["quantity"] =
+            (int)$row["quantity"];
+
+
+        $row["incentive"] =
+            round(
+                $row["incentive"],
+                2
+            );
+    }
+
+    unset($row);
+
+
+    return [
+
+        "top3" =>
+            $top3,
+
+        "bundlePool" =>
+            round(
+                $bundlePool,
+                2
+            ),
+
+        "breakdown" =>
+            $breakdown
+    ];
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| STAFF PROMOTION BREAKDOWN
+|--------------------------------------------------------------------------
+*/
+
+function getStaffPromotionBreakdown(
+    $db,
+    $month,
+    $sales_man_code
+) {
+
+    [$startDate, $endDate] =
+        getMonthRange(
+            $month
+        );
+
+
+    $sql = "
+        SELECT
+
+            si.SMC AS sales_man_code,
+
+            sd.staff_name,
+
+            sd.outlet,
+
+            si.promo_id,
+
+            ii.promo,
+
+            ii.type,
+
+            ii.Rate,
+
+            SUM(
+                si.quantity
+            ) AS quantity,
+
+            SUM(
+                si.quantity *
+                ii.Rate
+            ) AS incentive
+
+        FROM staff_incentives si
+
+        LEFT JOIN staff_details sd
+            ON sd.sales_man_code =
+               si.SMC
+
+        LEFT JOIN Incentives_information ii
+            ON ii.promo_id =
+               si.promo_id
+
+        WHERE
+
+            si.status =
+                'approved'
+
+            AND ii.type =
+                'individual'
+
+            AND si.submission_date >= ?
+
+            AND si.submission_date < ?
+
+            AND si.SMC = ?
+
+        GROUP BY
+
+            si.SMC,
+
+            sd.staff_name,
+
+            sd.outlet,
+
+            si.promo_id,
+
+            ii.promo,
+
+            ii.type,
+
+            ii.Rate
+
+        ORDER BY
+
+            incentive DESC,
+
+            ii.promo ASC
+    ";
+
+
+    $stmt =
+        $db->prepare(
+            $sql
+        );
+
+
+    if (!$stmt) {
+
+        response([
+            "success" => false,
+            "message" =>
+                "Failed to prepare breakdown query: " .
+                $db->error
+        ], 500);
+    }
+
+
+    $stmt->bind_param(
+        "sss",
+        $startDate,
+        $endDate,
+        $sales_man_code
+    );
+
+
+    if (
+        !$stmt->execute()
+    ) {
+
+        $error =
+            $stmt->error;
+
+        $stmt->close();
+
+
+        response([
+            "success" => false,
+            "message" =>
+                "Failed to fetch breakdown: " .
+                $error
+        ], 500);
+    }
+
+
+    $result =
+        $stmt->get_result();
+
+
+    $rows = [];
+
+
+    while (
+        $row =
+        $result->fetch_assoc()
+    ) {
+
+        $row["Rate"] =
+            (float)$row["Rate"];
+
+
+        $row["quantity"] =
+            (int)$row["quantity"];
+
+
+        $row["incentive"] =
+            (float)$row["incentive"];
+
+
+        $rows[] =
+            $row;
+    }
+
+
+    $stmt->close();
+
+
+    return $rows;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| BOOTSTRAP
+|--------------------------------------------------------------------------
+*/
+
+if (
+    $action ===
+    "bootstrap"
+) {
+
+    syncPromotionStatuses(
+        $conn
+    );
+
+
+    $month =
+        normalizeMonth(
+            $_GET["month"]
+            ??
+            date("Y-m")
+        );
+
+
+    $submissions =
+        fetchSubmissions(
+            $conn
+        );
+
+
+    $promotions =
+        fetchPromotions(
+            $conn
+        );
+
+
+    $users =
+        fetchUsers(
+            $conn
+        );
+
+
+    $staffCount =
+        count(
+            array_filter(
+                $users,
+                function ($user) {
+
+                    return
+                        strtolower(
+                            (string)(
+                                $user["role"]
+                                ?? ""
+                            )
+                        ) ===
+                        "staff";
+                }
+            )
+        );
+
+
+    response([
+
+        "success" =>
+            true,
+
+        "current_user_name" =>
+            $sessionName,
+
+        "dashboard" =>
+            buildDashboard(
+                $submissions,
+                $month,
+                $staffCount
+            ),
+
+        "submissions" =>
+            $submissions,
+
+        "promotions" =>
+            $promotions,
+
+        "users" =>
+            $users,
+
+        "monthlySummary" =>
+            buildMonthlySummary(
+                $submissions,
+                $month
+            ),
+
+        "top3" =>
+            buildTop3(
+                $submissions,
+                $month
+            )
+    ]);
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| STAFF PROMOTION BREAKDOWN
+|--------------------------------------------------------------------------
+*/
+
+if (
+    $action ===
+    "staff_promotion_breakdown"
+) {
+
+    $month =
+        normalizeMonth(
+            $_GET["month"]
+            ??
+            date("Y-m")
+        );
+
+
+    $sales_man_code =
+        trim(
+            $_GET["sales_man_code"]
+            ??
+            ""
+        );
+
+
+    if (
+        $sales_man_code ===
+        ""
+    ) {
+
+        response([
+            "success" => false,
+            "message" =>
+                "sales_man_code is required."
+        ], 400);
+    }
+
+
+    $breakdown =
+        getStaffPromotionBreakdown(
+            $conn,
+            $month,
+            $sales_man_code
+        );
+
+
+    response([
+
+        "success" =>
+            true,
+
+        "breakdown" =>
+            $breakdown
+    ]);
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| APPROVE SUBMISSION
+|--------------------------------------------------------------------------
+*/
+
+if (
+    $action ===
+    "approve_submission"
+) {
+
+    $data =
+        getJsonInput();
+
+
+    $id =
+        (int)requireField(
+            $data,
+            "incentive_id"
+        );
+
+
+    $sql = "
+        UPDATE staff_incentives
+
+        SET
+            status = 'approved',
+
+            rejection_reason = NULL
+
+        WHERE incentive_id = ?
+    ";
+
+
+    $stmt =
+        $conn->prepare(
+            $sql
+        );
+
+
+    if (!$stmt) {
+
+        response([
+            "success" => false,
+            "message" =>
+                "Failed to prepare approval: " .
+                $conn->error
+        ], 500);
+    }
+
+
+    $stmt->bind_param(
+        "i",
+        $id
+    );
+
+
+    if (
+        !$stmt->execute()
+    ) {
+
+        $error =
+            $stmt->error;
+
+        $stmt->close();
+
+
+        response([
+            "success" => false,
+            "message" =>
+                "Failed to approve submission: " .
+                $error
+        ], 500);
+    }
+
+
+    if (
+        $stmt->affected_rows ===
+        0
+    ) {
+
+        $stmt->close();
+
+
+        response([
+            "success" => false,
+            "message" =>
+                "Submission not found or no change was made."
+        ], 404);
+    }
+
+
+    $stmt->close();
+
+
+    response([
+
+        "success" =>
+            true,
+
+        "message" =>
+            "Submission approved."
+    ]);
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| REJECT SUBMISSION
+|--------------------------------------------------------------------------
+*/
+
+if (
+    $action ===
+    "reject_submission"
+) {
+
+    $data =
+        getJsonInput();
+
+
+    $id =
+        (int)requireField(
+            $data,
+            "incentive_id"
+        );
+
+
+    $reason =
+        requireField(
+            $data,
+            "rejection_reason"
+        );
+
+
+    $sql = "
+        UPDATE staff_incentives
+
+        SET
+
+            status = 'rejected',
+
+            rejection_reason = ?
+
+        WHERE incentive_id = ?
+    ";
+
+
+    $stmt =
+        $conn->prepare(
+            $sql
+        );
+
+
+    if (!$stmt) {
+
+        response([
+            "success" => false,
+            "message" =>
+                "Failed to prepare rejection: " .
+                $conn->error
+        ], 500);
+    }
+
+
+    $stmt->bind_param(
+        "si",
+        $reason,
+        $id
+    );
+
+
+    if (
+        !$stmt->execute()
+    ) {
+
+        $error =
+            $stmt->error;
+
+        $stmt->close();
+
+
+        response([
+            "success" => false,
+            "message" =>
+                "Failed to reject submission: " .
+                $error
+        ], 500);
+    }
+
+
+    $stmt->close();
+
+
+    response([
+
+        "success" =>
+            true,
+
+        "message" =>
+            "Submission rejected."
+    ]);
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| EDIT SUBMISSION PROMOTION
+|--------------------------------------------------------------------------
+*/
+
+if (
+    $action ===
+    "edit_submission_promotion"
+) {
+
+    $data =
+        getJsonInput();
+
+
+    $id =
+        (int)requireField(
+            $data,
+            "incentive_id"
+        );
+
+
+    $promoId =
+        (int)requireField(
+            $data,
+            "promo_id"
+        );
+
+
+    $check =
+        $conn->prepare(
+            "
+            SELECT promo_id
+
+            FROM Incentives_information
+
+            WHERE promo_id = ?
+            "
+        );
+
+
+    if (!$check) {
+
+        response([
+            "success" => false,
+            "message" =>
+                "Failed to check promotion: " .
+                $conn->error
+        ], 500);
+    }
+
+
+    $check->bind_param(
+        "i",
+        $promoId
+    );
+
+
+    $check->execute();
+
+
+    $result =
+        $check->get_result();
+
+
+    if (
+        $result->num_rows ===
+        0
+    ) {
+
+        $check->close();
+
+
+        response([
+            "success" => false,
+            "message" =>
+                "Promotion does not exist."
+        ], 400);
+    }
+
+
+    $check->close();
+
+
+    $stmt =
+        $conn->prepare(
+            "
+            UPDATE staff_incentives
+
+            SET promo_id = ?
+
+            WHERE incentive_id = ?
+            "
+        );
+
+
+    if (!$stmt) {
+
+        response([
+            "success" => false,
+            "message" =>
+                "Failed to prepare promotion update: " .
+                $conn->error
+        ], 500);
+    }
+
+
+    $stmt->bind_param(
+        "ii",
+        $promoId,
+        $id
+    );
+
+
+    if (
+        !$stmt->execute()
+    ) {
+
+        $error =
+            $stmt->error;
+
+        $stmt->close();
+
+
+        response([
+            "success" => false,
+            "message" =>
+                "Failed to update promotion: " .
+                $error
+        ], 500);
+    }
+
+
+    $stmt->close();
+
+
+    response([
+
+        "success" =>
+            true,
+
+        "message" =>
+            "Submission promotion updated."
+    ]);
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| ADD PROMOTION
+|--------------------------------------------------------------------------
+*/
+
+if (
+    $action ===
+    "add_promotion"
+) {
+
+    $data =
+        getJsonInput();
+
+
+    $promo =
+        requireField(
+            $data,
+            "promo"
+        );
+
+
+    $rate =
+        isset($data["Rate"])
+        ? (float)$data["Rate"]
+        : 0;
+
+
+    $type =
+        requireField(
+            $data,
+            "type"
+        );
+
+
+    $startDate =
+        requireField(
+            $data,
+            "start_date"
+        );
+
+
+    $endDate =
+        requireField(
+            $data,
+            "end_date"
+        );
+
+
+    if (
+        !in_array(
+            $type,
+            [
+                "individual",
+                "outlet_bundle"
+            ],
+            true
+        )
+    ) {
+
+        response([
+            "success" => false,
+            "message" =>
+                "Invalid promotion type."
+        ], 400);
+    }
+
+
+    if (
+        $rate < 0
+    ) {
+
+        response([
+            "success" => false,
+            "message" =>
+                "Rate cannot be negative."
+        ], 400);
+    }
+
+
+    if (
+        $endDate <
+        $startDate
+    ) {
+
+        response([
+            "success" => false,
+            "message" =>
+                "End date cannot be before start date."
+        ], 400);
+    }
+
+
+    $status =
+        calculatePromotionStatus(
+            $startDate,
+            $endDate
+        );
+
+
+    $item1 =
+        trim(
+            (string)(
+                $data["item_1"]
+                ?? ""
+            )
+        );
+
+
+    $item2 =
+        trim(
+            (string)(
+                $data["item_2"]
+                ?? ""
+            )
+        );
+
+
+    $item3 =
+        trim(
+            (string)(
+                $data["item_3"]
+                ?? ""
+            )
+        );
+
+
+    $item4 =
+        trim(
+            (string)(
+                $data["item_4"]
+                ?? ""
+            )
+        );
+
+
+    $item5 =
+        trim(
+            (string)(
+                $data["item_5"]
+                ?? ""
+            )
+        );
+
+
+    $conn->begin_transaction();
+
+
+    try {
+
+        $sql = "
+            INSERT INTO Incentives_information
+            (
+                promo,
+                Rate,
+                type,
+                start_date,
+                end_date,
+                status
+            )
+
+            VALUES
+            (
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?
+            )
+        ";
+
+
+        $stmt =
+            $conn->prepare(
+                $sql
+            );
+
+
+        if (!$stmt) {
+
+            throw new Exception(
+                $conn->error
+            );
+        }
+
+
+        $stmt->bind_param(
+            "sdssss",
+            $promo,
+            $rate,
+            $type,
+            $startDate,
+            $endDate,
+            $status
+        );
+
+
+        if (
+            !$stmt->execute()
+        ) {
+
+            throw new Exception(
+                $stmt->error
+            );
+        }
+
+
+        $promoId =
+            $stmt->insert_id;
+
+
+        $stmt->close();
+
+
+        if (
+            $type ===
+            "outlet_bundle"
+        ) {
+
+            $sql = "
+                INSERT INTO Bundle_information
+                (
+                    promo_id,
+                    item_1,
+                    item_2,
+                    item_3,
+                    item_4,
+                    item_5
+                )
+
+                VALUES
+                (
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?
+                )
+            ";
+
+
+            $stmt =
+                $conn->prepare(
+                    $sql
+                );
+
+
+            if (!$stmt) {
+
+                throw new Exception(
+                    $conn->error
+                );
+            }
+
+
+            $stmt->bind_param(
+                "isssss",
+                $promoId,
+                $item1,
+                $item2,
+                $item3,
+                $item4,
+                $item5
+            );
+
+
+            if (
+                !$stmt->execute()
+            ) {
+
+                throw new Exception(
+                    $stmt->error
+                );
+            }
+
+
+            $stmt->close();
+        }
+
+
+        $conn->commit();
+
+
+        response([
+
+            "success" =>
+                true,
+
+            "message" =>
+                "Promotion added.",
+
+            "promo_id" =>
+                $promoId
+        ]);
+
+    } catch (
+        Throwable $e
+    ) {
+
+        $conn->rollback();
+
+
+        response([
+
+            "success" =>
+                false,
+
+            "message" =>
+                "Failed to add promotion: " .
+                $e->getMessage()
+
+        ], 500);
+    }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| EDIT PROMOTION
+|--------------------------------------------------------------------------
+*/
+
+if (
+    $action ===
+    "edit_promotion"
+) {
+
+    $data =
+        getJsonInput();
+
+
+    $promoId =
+        (int)requireField(
+            $data,
+            "promo_id"
+        );
+
+
+    $promo =
+        requireField(
+            $data,
+            "promo"
+        );
+
+
+    $rate =
+        isset($data["Rate"])
+        ? (float)$data["Rate"]
+        : 0;
+
+
+    $type =
+        requireField(
+            $data,
+            "type"
+        );
+
+
+    $startDate =
+        requireField(
+            $data,
+            "start_date"
+        );
+
+
+    $endDate =
+        requireField(
+            $data,
+            "end_date"
+        );
+
+
+    if (
+        !in_array(
+            $type,
+            [
+                "individual",
+                "outlet_bundle"
+            ],
+            true
+        )
+    ) {
+
+        response([
+            "success" => false,
+            "message" =>
+                "Invalid promotion type."
+        ], 400);
+    }
+
+
+    if (
+        $rate < 0
+    ) {
+
+        response([
+            "success" => false,
+            "message" =>
+                "Rate cannot be negative."
+        ], 400);
+    }
+
+
+    if (
+        $endDate <
+        $startDate
+    ) {
+
+        response([
+            "success" => false,
+            "message" =>
+                "End date cannot be before start date."
+        ], 400);
+    }
+
+
+    $status =
+        calculatePromotionStatus(
+            $startDate,
+            $endDate
+        );
+
+
+    $item1 =
+        trim(
+            (string)(
+                $data["item_1"]
+                ?? ""
+            )
+        );
+
+
+    $item2 =
+        trim(
+            (string)(
+                $data["item_2"]
+                ?? ""
+            )
+        );
+
+
+    $item3 =
+        trim(
+            (string)(
+                $data["item_3"]
+                ?? ""
+            )
+        );
+
+
+    $item4 =
+        trim(
+            (string)(
+                $data["item_4"]
+                ?? ""
+            )
+        );
+
+
+    $item5 =
+        trim(
+            (string)(
+                $data["item_5"]
+                ?? ""
+            )
+        );
+
+
+    $conn->begin_transaction();
+
+
+    try {
+
+        $sql = "
+            UPDATE Incentives_information
+
+            SET
+
+                promo = ?,
+
+                Rate = ?,
+
+                type = ?,
+
+                start_date = ?,
+
+                end_date = ?,
+
+                status = ?
+
+            WHERE promo_id = ?
+        ";
+
+
+        $stmt =
+            $conn->prepare(
+                $sql
+            );
+
+
+        if (!$stmt) {
+
+            throw new Exception(
+                $conn->error
+            );
+        }
+
+
+        $stmt->bind_param(
+            "sdssssi",
+            $promo,
+            $rate,
+            $type,
+            $startDate,
+            $endDate,
+            $status,
+            $promoId
+        );
+
+
+        if (
+            !$stmt->execute()
+        ) {
+
+            throw new Exception(
+                $stmt->error
+            );
+        }
+
+
+        $stmt->close();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | OUTLET BUNDLE
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $type ===
+            "outlet_bundle"
+        ) {
+
+            $check =
+                $conn->prepare(
+                    "
+                    SELECT promo_id
+
+                    FROM Bundle_information
+
+                    WHERE promo_id = ?
+                    "
+                );
+
+
+            if (!$check) {
+
+                throw new Exception(
+                    $conn->error
+                );
+            }
+
+
+            $check->bind_param(
+                "i",
+                $promoId
+            );
+
+
+            $check->execute();
+
+
+            $result =
+                $check->get_result();
+
+
+            $exists =
+                $result->num_rows >
+                0;
+
+
+            $check->close();
+
+
+            if ($exists) {
+
+                $stmt =
+                    $conn->prepare(
+                        "
+                        UPDATE Bundle_information
+
+                        SET
+
+                            item_1 = ?,
+
+                            item_2 = ?,
+
+                            item_3 = ?,
+
+                            item_4 = ?,
+
+                            item_5 = ?
+
+                        WHERE promo_id = ?
+                        "
+                    );
+
+
+                if (!$stmt) {
+
+                    throw new Exception(
+                        $conn->error
+                    );
+                }
+
+
+                $stmt->bind_param(
+                    "sssssi",
+                    $item1,
+                    $item2,
+                    $item3,
+                    $item4,
+                    $item5,
+                    $promoId
+                );
+
+            } else {
+
+                $stmt =
+                    $conn->prepare(
+                        "
+                        INSERT INTO Bundle_information
+                        (
+                            promo_id,
+                            item_1,
+                            item_2,
+                            item_3,
+                            item_4,
+                            item_5
+                        )
+
+                        VALUES
+                        (
+                            ?,
+                            ?,
+                            ?,
+                            ?,
+                            ?,
+                            ?
+                        )
+                        "
+                    );
+
+
+                if (!$stmt) {
+
+                    throw new Exception(
+                        $conn->error
+                    );
+                }
+
+
+                $stmt->bind_param(
+                    "isssss",
+                    $promoId,
+                    $item1,
+                    $item2,
+                    $item3,
+                    $item4,
+                    $item5
+                );
+            }
+
+
+            if (
+                !$stmt->execute()
+            ) {
+
+                throw new Exception(
+                    $stmt->error
+                );
+            }
+
+
+            $stmt->close();
+
+        } else {
+
+            /*
+            |--------------------------------------------------------------------------
+            | INDIVIDUAL PROMOTION
+            |--------------------------------------------------------------------------
+            |
+            | Remove any old bundle information.
+            |
+            */
+
+            $stmt =
+                $conn->prepare(
+                    "
+                    DELETE FROM Bundle_information
+
+                    WHERE promo_id = ?
+                    "
+                );
+
+
+            if (!$stmt) {
+
+                throw new Exception(
+                    $conn->error
+                );
+            }
+
+
+            $stmt->bind_param(
+                "i",
+                $promoId
+            );
+
+
+            if (
+                !$stmt->execute()
+            ) {
+
+                throw new Exception(
+                    $stmt->error
+                );
+            }
+
+
+            $stmt->close();
+        }
+
+
+        $conn->commit();
+
+
+        response([
+
+            "success" =>
+                true,
+
+            "message" =>
+                "Promotion updated."
+        ]);
+
+    } catch (
+        Throwable $e
+    ) {
+
+        $conn->rollback();
+
+
+        response([
+
+            "success" =>
+                false,
+
+            "message" =>
+                "Failed to update promotion: " .
+                $e->getMessage()
+
+        ], 500);
+    }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| ADD USER
+|--------------------------------------------------------------------------
+*/
+
+if (
+    $action ===
+    "add_user"
+) {
+
+    $data =
+        getJsonInput();
+
+
+    $staffName =
+        requireField(
+            $data,
+            "staff_name"
+        );
+
+
+    $sales_man_code =
+        requireField(
+            $data,
+            "sales_man_code"
+        );
+
+
+    $outlet =
+        requireField(
+            $data,
+            "outlet"
+        );
+
+
+    $role =
+        requireField(
+            $data,
+            "role"
+        );
+
+
+    if (
+        !in_array(
+            $role,
+            [
+                "staff",
+                "admin"
+            ],
+            true
+        )
+    ) {
+
+        response([
+            "success" => false,
+            "message" =>
+                "Invalid role."
+        ], 400);
+    }
+
+
+    $sql = "
+        INSERT INTO staff_details
+        (
+            staff_name,
+            sales_man_code,
+            outlet,
+            role
+        )
+
+        VALUES
+        (
+            ?,
+            ?,
+            ?,
+            ?
+        )
+    ";
+
+
+    $stmt =
+        $conn->prepare(
+            $sql
+        );
+
+
+    if (!$stmt) {
+
+        response([
+            "success" => false,
+            "message" =>
+                "Failed to prepare user insert: " .
+                $conn->error
+        ], 500);
+    }
+
+
+    $stmt->bind_param(
+        "ssss",
+        $staffName,
+        $sales_man_code,
+        $outlet,
+        $role
+    );
+
+
+    if (
+        !$stmt->execute()
+    ) {
+
+        $error =
+            $stmt->error;
+
+
+        $stmt->close();
+
+
+        response([
+            "success" => false,
+            "message" =>
+                "Failed to add user: " .
+                $error
+        ], 400);
+    }
+
+
+    $stmt->close();
+
+
+    response([
+
+        "success" =>
+            true,
+
+        "message" =>
+            "User added."
+    ]);
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| DELETE USER
+|--------------------------------------------------------------------------
+*/
+
+if (
+    $action ===
+    "delete_user"
+) {
+
+    $data =
+        getJsonInput();
+
+
+    $sales_man_code =
+        requireField(
+            $data,
+            "sales_man_code"
+        );
+
+
+    $sql = "
+        DELETE FROM staff_details
+
+        WHERE sales_man_code = ?
+    ";
+
+
+    $stmt =
+        $conn->prepare(
+            $sql
+        );
+
+
+    if (!$stmt) {
+
+        response([
+            "success" => false,
+            "message" =>
+                "Failed to prepare user deletion: " .
+                $conn->error
+        ], 500);
+    }
+
+
+    $stmt->bind_param(
+        "s",
+        $sales_man_code
+    );
+
+
+    if (
+        !$stmt->execute()
+    ) {
+
+        $error =
+            $stmt->error;
+
+
+        $stmt->close();
+
+
+        response([
+            "success" => false,
+            "message" =>
+                "Failed to delete user: " .
+                $error
+        ], 400);
+    }
+
+
+    $stmt->close();
+
+
+    response([
+
+        "success" =>
+            true,
+
+        "message" =>
+            "User deleted."
+    ]);
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| UNKNOWN ACTION
+|--------------------------------------------------------------------------
+*/
+
+response([
+
+    "success" =>
+        false,
+
+    "message" =>
+        "Unknown action."
+
+], 400);
