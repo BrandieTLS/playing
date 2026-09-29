@@ -1,0 +1,6453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Admin Portal - Incentive Management</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f5f6f8;
+            color: #222;
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font-family: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        /* =========================
+           HEADER
+        ========================= */
+
+        .header {
+            background: #ffffff;
+            border-bottom: 1px solid #ddd;
+            padding: 18px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .header-left p {
+            margin: 5px 0 0;
+            color: #777;
+            font-size: 13px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .admin-info {
+            text-align: right;
+        }
+
+        .admin-info strong {
+            display: block;
+            font-size: 14px;
+        }
+
+        .admin-info span {
+            display: block;
+            margin-top: 3px;
+            font-size: 12px;
+            color: #777;
+        }
+
+        /* =========================
+           CONTAINER
+        ========================= */
+
+        .container {
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 25px;
+        }
+
+        /* =========================
+           TABS
+        ========================= */
+
+        .tabs {
+            background: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            display: flex;
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            background: transparent;
+            border: none;
+            padding: 15px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+        }
+
+        .tab-button:hover {
+            background: #f8f9fa;
+        }
+
+        .tab-button.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* =========================
+           CARDS
+        ========================= */
+
+        .card {
+            background: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        .card-header h2,
+        .card-header h3 {
+            margin: 0;
+        }
+
+        .card-header p {
+            margin: 5px 0 0;
+            color: #777;
+            font-size: 13px;
+        }
+
+        /* =========================
+           STAT CARDS
+        ========================= */
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 18px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #777;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        /* =========================
+           BUTTONS
+        ========================= */
+
+        .btn {
+            border: none;
+            border-radius: 6px;
+            padding: 9px 14px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            opacity: 0.88;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-success {
+            background: #16a34a;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #d97706;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-light {
+            background: #e5e7eb;
+            color: #222;
+        }
+
+        .btn-small {
+            padding: 6px 9px;
+            font-size: 12px;
+        }
+
+        /* =========================
+           FILTERS
+        ========================= */
+
+        .filters {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 160px;
+        }
+
+        .filter-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        /* =========================
+           INPUTS
+        ========================= */
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 9px 11px;
+            background: #fff;
+            font-size: 13px;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 90px;
+        }
+
+        /* =========================
+           TABLE
+        ========================= */
+
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 950px;
+        }
+
+        th,
+        td {
+            padding: 11px 10px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+            font-size: 13px;
+            vertical-align: middle;
+        }
+
+        th {
+            background: #f8f9fa;
+            color: #555;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        tr:hover td {
+            background: #fafafa;
+        }
+
+        .empty-row {
+            text-align: center;
+            color: #777;
+            padding: 30px;
+        }
+
+        /* =========================
+           BADGES
+        ========================= */
+
+        .badge {
+            display: inline-block;
+            padding: 5px 9px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .badge-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-approved {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-individual {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-bundle {
+            background: #ede9fe;
+            color: #5b21b6;
+        }
+
+        /* =========================
+           FORMS
+        ========================= */
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .form-help {
+            font-size: 11px;
+            color: #777;
+            margin-top: 4px;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        /* =========================
+           BUNDLE
+        ========================= */
+
+        .bundle-box {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 7px;
+            padding: 15px;
+        }
+
+        .bundle-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .bundle-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .bundle-number {
+            width: 30px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        /* =========================
+           MODAL
+        ========================= */
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal.show {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            width: 100%;
+            max-width: 700px;
+            max-height: 92vh;
+            overflow-y: auto;
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 22px;
+        }
+
+        .modal-large {
+            max-width: 900px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+        }
+
+        .close-btn {
+            border: none;
+            background: transparent;
+            font-size: 26px;
+            color: #777;
+            cursor: pointer;
+        }
+
+        /* =========================
+           DETAILS
+        ========================= */
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .detail-item {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 12px;
+        }
+
+        .detail-label {
+            font-size: 11px;
+            color: #777;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 13px;
+            font-weight: 600;
+            word-break: break-word;
+        }
+
+        .proof-container {
+            margin-top: 20px;
+        }
+
+        .proof-container h3 {
+            margin-top: 0;
+        }
+
+        .proof-container img {
+            display: block;
+            max-width: 100%;
+            max-height: 400px;
+            border: 1px solid #ddd;
+            border-radius: 7px;
+        }
+
+        /* =========================
+           LOADING / ERROR
+        ========================= */
+
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #777;
+        }
+
+        .error-box {
+            display: none;
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            border-radius: 7px;
+            padding: 12px;
+            margin-bottom: 20px;
+        }
+
+        /* =========================
+           SUMMARY
+        ========================= */
+
+        .summary-filter {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .summary-total {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        /* =========================
+           RESPONSIVE
+        ========================= */
+
+        @media (max-width: 1250px) {
+
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+        }
+
+        @media (max-width: 800px) {
+
+            .header {
+                position: static;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .header-right {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .form-grid,
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-group.full {
+                grid-column: auto;
+            }
+
+        }
+
+        @media (max-width: 500px) {
+
+            .container {
+                padding: 12px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+    </style>
+</head>
+
+<body>
+
+<header class="header">
+
+    <div class="header-left">
+
+        <h1>Incentive Management</h1>
+
+        <p>Administrator Portal</p>
+
+    </div>
+
+    <div class="header-right">
+
+        <div class="admin-info">
+
+            <strong id="adminName">
+                Admin
+            </strong>
+
+            <span id="adminSMC"></span>
+
+        </div>
+
+        <button
+            class="btn btn-danger"
+            onclick="logout()">
+            Logout
+        </button>
+
+    </div>
+
+</header>
+
+
+<div class="container">
+
+    <div id="errorBox"
+         class="error-box"></div>
+
+
+    <!-- =====================================================
+         TABS
+    ====================================================== -->
+
+    <div class="tabs">
+
+        <button
+            class="tab-button active"
+            onclick="switchTab('dashboard', this)">
+            Dashboard
+        </button>
+
+        <button
+            class="tab-button"
+            onclick="switchTab('submissions', this)">
+            Submissions
+        </button>
+
+        <button
+            class="tab-button"
+            onclick="switchTab('promotions', this)">
+            Promotions
+        </button>
+
+        <button
+            class="tab-button"
+            onclick="switchTab('users', this)">
+            Staff / Users
+        </button>
+
+        <button
+            class="tab-button"
+            onclick="switchTab('monthly', this)">
+            Monthly Summary
+        </button>
+
+        <button
+            class="tab-button"
+            onclick="switchTab('top3', this)">
+            Top 3
+        </button>
+
+    </div>
+
+
+    <!-- =====================================================
+         DASHBOARD
+    ====================================================== -->
+
+    <section
+        id="dashboard"
+        class="tab-content active">
+
+        <div class="stats-grid">
+
+            <div class="stat-card">
+
+                <div class="stat-label">
+                    Total Submissions
+                </div>
+
+                <div
+                    class="stat-value"
+                    id="statTotal">
+                    0
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-label">
+                    Pending
+                </div>
+
+                <div
+                    class="stat-value"
+                    id="statPending">
+                    0
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-label">
+                    Approved
+                </div>
+
+                <div
+                    class="stat-value"
+                    id="statApproved">
+                    0
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-label">
+                    Rejected
+                </div>
+
+                <div
+                    class="stat-value"
+                    id="statRejected">
+                    0
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-label">
+                    Individual Incentives
+                </div>
+
+                <div
+                    class="stat-value"
+                    id="statIndividual">
+                    $0.00
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-label">
+                    Bundle Incentives
+                </div>
+
+                <div
+                    class="stat-value"
+                    id="statBundle">
+                    $0.00
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-header">
+
+                <h2>
+                    Recent Submissions
+                </h2>
+
+                <button
+                    class="btn btn-light"
+                    onclick="refreshAll()">
+                    Refresh
+                </button>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                    <tr>
+
+                        <th>ID</th>
+                        <th>Staff</th>
+                        <th>Promotion</th>
+                        <th>Type</th>
+                        <th>Qty</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Action</th>
+
+                    </tr>
+
+                    </thead>
+
+                    <tbody id="recentSubmissionsBody">
+
+                    <tr>
+                        <td
+                            colspan="9"
+                            class="loading">
+                            Loading...
+                        </td>
+                    </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         SUBMISSIONS
+    ====================================================== -->
+
+    <section
+        id="submissions"
+        class="tab-content">
+
+        <div class="card">
+
+            <div class="card-header">
+
+                <h2>
+                    Incentive Submissions
+                </h2>
+
+                <button
+                    class="btn btn-light"
+                    onclick="loadSubmissions()">
+                    Refresh
+                </button>
+
+            </div>
+
+
+            <div class="filters">
+
+                <div class="filter-group">
+
+                    <label>
+                        Search
+                    </label>
+
+                    <input
+                        type="text"
+                        id="submissionSearch"
+                        placeholder="Name, SMC, promotion..."
+                        oninput="renderSubmissions()">
+
+                </div>
+
+
+                <div class="filter-group">
+
+                    <label>
+                        Status
+                    </label>
+
+                    <select
+                        id="submissionStatus"
+                        onchange="renderSubmissions()">
+
+                        <option value="">
+                            All
+                        </option>
+
+                        <option value="pending">
+                            Pending
+                        </option>
+
+                        <option value="approved">
+                            Approved
+                        </option>
+
+                        <option value="rejected">
+                            Rejected
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="filter-group">
+
+                    <label>
+                        Type
+                    </label>
+
+                    <select
+                        id="submissionType"
+                        onchange="renderSubmissions()">
+
+                        <option value="">
+                            All
+                        </option>
+
+                        <option value="individual">
+                            Individual
+                        </option>
+
+                        <option value="bundle">
+                            Bundle
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="filter-group">
+
+                    <label>
+                        Month
+                    </label>
+
+                    <input
+                        type="month"
+                        id="submissionMonth"
+                        onchange="renderSubmissions()">
+
+                </div>
+
+
+                <div class="filter-group">
+
+                    <label>
+                        Day
+                    </label>
+
+                    <input
+                        type="date"
+                        id="submissionDay"
+                        onchange="renderSubmissions()">
+
+                </div>
+
+
+                <div class="filter-group">
+
+                    <label>
+                        Staff
+                    </label>
+
+                    <select
+                        id="submissionStaff"
+                        onchange="renderSubmissions()">
+
+                        <option value="">
+                            All Staff
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="filter-group">
+
+                    <label>
+                        Outlet
+                    </label>
+
+                    <select
+                        id="submissionOutlet"
+                        onchange="renderSubmissions()">
+
+                        <option value="">
+                            All Outlets
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                    <tr>
+
+                        <th>ID</th>
+                        <th>Staff</th>
+                        <th>SMC</th>
+                        <th>Outlet</th>
+                        <th>Promotion</th>
+                        <th>Type</th>
+                        <th>Qty</th>
+                        <th>Rate</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Action</th>
+
+                    </tr>
+
+                    </thead>
+
+                    <tbody id="submissionsBody">
+
+                    <tr>
+
+                        <td
+                            colspan="12"
+                            class="loading">
+                            Loading...
+                        </td>
+
+                    </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         PROMOTIONS
+    ====================================================== -->
+
+    <section
+        id="promotions"
+        class="tab-content">
+
+        <div class="card">
+
+            <div class="card-header">
+
+                <h2>
+                    Promotions
+                </h2>
+
+                <button
+                    class="btn btn-primary"
+                    onclick="openAddPromotionModal()">
+                    + Add Promotion
+                </button>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                    <tr>
+
+                        <th>ID</th>
+                        <th>Promotion</th>
+                        <th>Rate</th>
+                        <th>Type</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Bundle Items</th>
+                        <th>Action</th>
+
+                    </tr>
+
+                    </thead>
+
+                    <tbody id="promotionsBody">
+
+                    <tr>
+
+                        <td
+                            colspan="8"
+                            class="loading">
+                            Loading...
+                        </td>
+
+                    </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         STAFF / USERS
+    ====================================================== -->
+
+    <section
+        id="users"
+        class="tab-content">
+
+        <div class="card">
+
+            <div class="card-header">
+
+                <h2>
+                    Staff / Users
+                </h2>
+
+                <button
+                    class="btn btn-primary"
+                    onclick="openAddUserModal()">
+                    + Add Staff
+                </button>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                    <tr>
+
+                        <th>Name</th>
+                        <th>SMC</th>
+                        <th>Outlet</th>
+                        <th>Role</th>
+                        <th>Action</th>
+
+                    </tr>
+
+                    </thead>
+
+                    <tbody id="usersBody">
+
+                    <tr>
+
+                        <td
+                            colspan="5"
+                            class="loading">
+                            Loading...
+                        </td>
+
+                    </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         MONTHLY SUMMARY
+    ====================================================== -->
+
+    <section
+        id="monthly"
+        class="tab-content">
+
+        <div class="card">
+
+            <div class="card-header">
+
+                <div>
+
+                    <h2>
+                        Monthly Summary
+                    </h2>
+
+                    <p>
+                        View approved incentives for any month.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="summary-filter">
+
+                <div class="filter-group">
+
+                    <label>
+                        Select Month
+                    </label>
+
+                    <input
+                        type="month"
+                        id="monthlySummaryMonth"
+                        onchange="loadMonthlySummary()">
+
+                </div>
+
+
+                <button
+                    class="btn btn-light"
+                    onclick="setCurrentMonth()">
+                    Current Month
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="card-header">
+
+                <h3 id="monthlySummaryTitle">
+                    Monthly Summary
+                </h3>
+
+                <div
+                    class="summary-total"
+                    id="monthlyGrandTotal">
+                    $0.00
+                </div>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                    <tr>
+
+                        <th>Staff</th>
+                        <th>SMC</th>
+                        <th>Outlet</th>
+                        <th>Individual</th>
+                        <th>Bundle</th>
+                        <th>Total</th>
+
+                    </tr>
+
+                    </thead>
+
+                    <tbody id="monthlySummaryBody">
+
+                    <tr>
+
+                        <td
+                            colspan="6"
+                            class="loading">
+                            Select a month.
+                        </td>
+
+                    </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         TOP 3
+    ====================================================== -->
+
+    <section
+        id="top3"
+        class="tab-content">
+
+        <div class="card">
+
+            <div class="card-header">
+
+                <div>
+
+                    <h2>
+                        Top 3 Approved Incentives
+                    </h2>
+
+                    <p>
+                        Based on the selected month.
+                    </p>
+
+                </div>
+
+
+                <div class="summary-filter">
+
+                    <div class="filter-group">
+
+                        <label>
+                            Select Month
+                        </label>
+
+                        <input
+                            type="month"
+                            id="top3Month"
+                            onchange="loadTop3()">
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                    <tr>
+
+                        <th>Rank</th>
+                        <th>Staff</th>
+                        <th>SMC</th>
+                        <th>Outlet</th>
+                        <th>Total Approved</th>
+
+                    </tr>
+
+                    </thead>
+
+                    <tbody id="top3Body">
+
+                    <tr>
+
+                        <td
+                            colspan="5"
+                            class="loading">
+                            Select a month.
+                        </td>
+
+                    </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+<!-- =========================================================
+     VIEW SUBMISSION MODAL
+========================================================== -->
+
+<div
+    id="submissionModal"
+    class="modal"
+    onclick="outsideModal(event, 'submissionModal')">
+
+    <div class="modal-content modal-large">
+
+        <div class="modal-header">
+
+            <h2>
+                Submission Details
+            </h2>
+
+            <button
+                class="close-btn"
+                onclick="closeModal('submissionModal')">
+                &times;
+            </button>
+
+        </div>
+
+
+        <div id="submissionDetails">
+
+            <div class="loading">
+                Loading...
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     ADD / EDIT PROMOTION MODAL
+========================================================== -->
+
+<div
+    id="promotionModal"
+    class="modal"
+    onclick="outsideModal(event, 'promotionModal')">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2 id="promotionModalTitle">
+                Add Promotion
+            </h2>
+
+            <button
+                class="close-btn"
+                onclick="closeModal('promotionModal')">
+                &times;
+            </button>
+
+        </div>
+
+
+        <form
+            id="promotionForm"
+            onsubmit="savePromotion(event)">
+
+            <input
+                type="hidden"
+                id="editPromotionId">
+
+
+            <div class="form-grid">
+
+                <div class="form-group full">
+
+                    <label>
+                        Promotion Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="promotionName"
+                        required>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Rate
+                    </label>
+
+                    <input
+                        type="number"
+                        id="promotionRate"
+                        min="0"
+                        step="0.01"
+                        required>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Type
+                    </label>
+
+                    <select
+                        id="promotionType"
+                        onchange="toggleBundleFields()"
+                        required>
+
+                        <option value="individual">
+                            Individual
+                        </option>
+
+                        <option value="bundle">
+                            Bundle
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Start Date
+                    </label>
+
+                    <input
+                        type="date"
+                        id="promotionStartDate">
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        End Date
+                    </label>
+
+                    <input
+                        type="date"
+                        id="promotionEndDate">
+
+                </div>
+
+
+                <div
+                    class="form-group full"
+                    id="bundleFields"
+                    style="display:none;">
+
+                    <label>
+                        Bundle Items
+                    </label>
+
+
+                    <div class="bundle-box">
+
+                        <div class="bundle-item">
+
+                            <span class="bundle-number">
+                                1.
+                            </span>
+
+                            <input
+                                type="text"
+                                id="item_1"
+                                placeholder="Item 1">
+
+                        </div>
+
+
+                        <div class="bundle-item">
+
+                            <span class="bundle-number">
+                                2.
+                            </span>
+
+                            <input
+                                type="text"
+                                id="item_2"
+                                placeholder="Item 2">
+
+                        </div>
+
+
+                        <div class="bundle-item">
+
+                            <span class="bundle-number">
+                                3.
+                            </span>
+
+                            <input
+                                type="text"
+                                id="item_3"
+                                placeholder="Item 3">
+
+                        </div>
+
+
+                        <div class="bundle-item">
+
+                            <span class="bundle-number">
+                                4.
+                            </span>
+
+                            <input
+                                type="text"
+                                id="item_4"
+                                placeholder="Item 4">
+
+                        </div>
+
+
+                        <div class="bundle-item">
+
+                            <span class="bundle-number">
+                                5.
+                            </span>
+
+                            <input
+                                type="text"
+                                id="item_5"
+                                placeholder="Item 5">
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-help">
+                        Enter at least one bundle item. Items 2–5 are optional.
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="form-actions">
+
+                <button
+                    type="button"
+                    class="btn btn-light"
+                    onclick="closeModal('promotionModal')">
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn btn-primary">
+                    Save Promotion
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     ADD / EDIT USER MODAL
+========================================================== -->
+
+<div
+    id="userModal"
+    class="modal"
+    onclick="outsideModal(event, 'userModal')">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2 id="userModalTitle">
+                Add Staff
+            </h2>
+
+            <button
+                class="close-btn"
+                onclick="closeModal('userModal')">
+                &times;
+            </button>
+
+        </div>
+
+
+        <form
+            id="userForm"
+            onsubmit="saveUser(event)">
+
+            <input
+                type="hidden"
+                id="editUserSMC">
+
+
+            <div class="form-grid">
+
+                <div class="form-group full">
+
+                    <label>
+                        Staff Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="userName"
+                        required>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Sales Man Code (SMC)
+                    </label>
+
+                    <input
+                        type="text"
+                        id="userSMC"
+                        maxlength="5"
+                        required>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Outlet
+                    </label>
+
+                    <input
+                        type="text"
+                        id="userOutlet"
+                        required>
+
+                </div>
+
+
+                <div class="form-group full">
+
+                    <label>
+                        Role
+                    </label>
+
+                    <select
+                        id="userRole"
+                        required>
+
+                        <option value="staff">
+                            Staff
+                        </option>
+
+                        <option value="admin">
+                            Admin
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <div class="form-actions">
+
+                <button
+                    type="button"
+                    class="btn btn-light"
+                    onclick="closeModal('userModal')">
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn btn-primary">
+                    Save Staff
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     EDIT SUBMISSION MODAL
+========================================================== -->
+
+<div
+    id="editSubmissionModal"
+    class="modal"
+    onclick="outsideModal(event, 'editSubmissionModal')">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2>
+                Edit Submission
+            </h2>
+
+            <button
+                class="close-btn"
+                onclick="closeModal('editSubmissionModal')">
+                &times;
+            </button>
+
+        </div>
+
+
+        <form
+            id="editSubmissionForm"
+            onsubmit="saveEditSubmission(event)">
+
+            <input
+                type="hidden"
+                id="editSubmissionId">
+
+
+            <div class="form-grid">
+
+                <div class="form-group full">
+
+                    <label>
+                        Promotion
+                    </label>
+
+                    <select
+                        id="editSubmissionPromo"
+                        required>
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Quantity
+                    </label>
+
+                    <input
+                        type="number"
+                        id="editSubmissionQuantity"
+                        min="1"
+                        step="1"
+                        required>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Status
+                    </label>
+
+                    <select
+                        id="editSubmissionStatus">
+
+                        <option value="pending">
+                            Pending
+                        </option>
+
+                        <option value="approved">
+                            Approved
+                        </option>
+
+                        <option value="rejected">
+                            Rejected
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group full">
+
+                    <label>
+                        Rejection Reason
+                    </label>
+
+                    <textarea
+                        id="editSubmissionReason"
+                        placeholder="Required when status is rejected"></textarea>
+
+                </div>
+
+            </div>
+
+
+            <div class="form-actions">
+
+                <button
+                    type="button"
+                    class="btn btn-light"
+                    onclick="closeModal('editSubmissionModal')">
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn btn-primary">
+                    Save Changes
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    /* =========================================================
+       GLOBAL DATA
+    ========================================================== */
+
+    let adminData = {
+        admin: {},
+        dashboard: {},
+        submissions: [],
+        promotions: [],
+        users: [],
+        monthlySummary: [],
+        top3: []
+    };
+
+
+    /* =========================================================
+       HELPERS
+    ========================================================== */
+
+    function escapeHtml(value) {
+
+        if (
+            value === null ||
+            value === undefined
+        ) {
+            return "";
+        }
+
+        return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+
+    function getValue(
+        obj,
+        keys,
+        fallback = ""
+    ) {
+
+        if (!obj) {
+            return fallback;
+        }
+
+        for (const key of keys) {
+
+            if (
+                obj[key] !== undefined &&
+                obj[key] !== null &&
+                obj[key] !== ""
+            ) {
+                return obj[key];
+            }
+
+        }
+
+        return fallback;
+    }
+
+
+    function getSubmissionId(item) {
+
+        return getValue(
+            item,
+            [
+                "incentive_id",
+                "submission_id",
+                "id"
+            ],
+            ""
+        );
+
+    }
+
+
+    function getStaffName(item) {
+
+        return getValue(
+            item,
+            [
+                "staff_name",
+                "name"
+            ],
+            "-"
+        );
+
+    }
+
+
+    function getSMC(item) {
+
+        return getValue(
+            item,
+            [
+                "sales_man_code",
+                "SMC",
+                "smc"
+            ],
+            "-"
+        );
+
+    }
+
+
+    function getOutlet(item) {
+
+        return getValue(
+            item,
+            [
+                "outlet",
+                "outlet_name"
+            ],
+            "-"
+        );
+
+    }
+
+
+    function getPromoName(item) {
+
+        return getValue(
+            item,
+            [
+                "promo",
+                "promotion",
+                "promo_name",
+                "promotion_name"
+            ],
+            "-"
+        );
+
+    }
+
+
+    function getPromotionId(item) {
+
+        return getValue(
+            item,
+            [
+                "promo_id",
+                "promotion_id"
+            ],
+            ""
+        );
+
+    }
+
+
+    function getType(item) {
+
+        return String(
+            getValue(
+                item,
+                [
+                    "type",
+                    "promotion_type",
+                    "promo_type"
+                ],
+                "individual"
+            )
+        ).toLowerCase();
+
+    }
+
+
+    function getQuantity(item) {
+
+        const value = Number(
+            getValue(
+                item,
+                [
+                    "quantity",
+                    "qty"
+                ],
+                0
+            )
+        );
+
+        return Number.isFinite(value)
+            ? value
+            : 0;
+    }
+
+
+    function getRate(item) {
+
+        const value = Number(
+            getValue(
+                item,
+                [
+                    "Rate",
+                    "rate",
+                    "incentive_rate",
+                    "promo_rate"
+                ],
+                0
+            )
+        );
+
+        return Number.isFinite(value)
+            ? value
+            : 0;
+    }
+
+
+    function getStatus(item) {
+
+        return String(
+            getValue(
+                item,
+                [
+                    "status",
+                    "submission_status"
+                ],
+                ""
+            )
+        ).toLowerCase();
+
+    }
+
+
+    function getSubmissionDate(item) {
+
+        return getValue(
+            item,
+            [
+                "submission_date",
+                "submitted_at",
+                "created_at",
+                "date"
+            ],
+            "-"
+        );
+
+    }
+
+
+    function getAmount(item) {
+
+        const explicit =
+            getValue(
+                item,
+                [
+                    "amount",
+                    "total_amount",
+                    "incentive_amount"
+                ],
+                null
+            );
+
+
+        if (
+            explicit !== null &&
+            explicit !== ""
+        ) {
+
+            const amount =
+                Number(explicit);
+
+            if (
+                Number.isFinite(amount)
+            ) {
+                return amount;
+            }
+
+        }
+
+
+        return (
+            getQuantity(item) *
+            getRate(item)
+        );
+
+    }
+
+
+    function money(value) {
+
+        const number =
+            Number(value);
+
+        if (
+            !Number.isFinite(number)
+        ) {
+            return "$0.00";
+        }
+
+        return "$" +
+            number.toFixed(2);
+
+    }
+
+
+    function formatStatus(status) {
+
+        status =
+            String(
+                status || ""
+            ).toLowerCase();
+
+
+        if (status === "approved") {
+
+            return `
+                <span class="badge badge-approved">
+                    Approved
+                </span>
+            `;
+
+        }
+
+
+        if (status === "rejected") {
+
+            return `
+                <span class="badge badge-rejected">
+                    Rejected
+                </span>
+            `;
+
+        }
+
+
+        return `
+            <span class="badge badge-pending">
+                Pending
+            </span>
+        `;
+
+    }
+
+
+    function formatType(type) {
+
+        type =
+            String(
+                type || ""
+            ).toLowerCase();
+
+
+        if (type === "bundle") {
+
+            return `
+                <span class="badge badge-bundle">
+                    Bundle
+                </span>
+            `;
+
+        }
+
+
+        return `
+            <span class="badge badge-individual">
+                Individual
+            </span>
+        `;
+
+    }
+
+
+    function showError(message) {
+
+        const box =
+            document.getElementById(
+                "errorBox"
+            );
+
+        box.textContent =
+            message || "An error occurred.";
+
+        box.style.display =
+            "block";
+
+
+        setTimeout(() => {
+
+            box.style.display =
+                "none";
+
+        }, 6000);
+
+    }
+
+
+    /* =========================================================
+       API REQUEST
+    ========================================================== */
+
+    async function apiRequest(
+        action,
+        data = {}
+    ) {
+
+        try {
+
+            const response =
+                await fetch(
+                    "admin.php?action=" +
+                    encodeURIComponent(action),
+                    {
+                        method: "POST",
+                        credentials: "same-origin",
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+                        body:
+                            JSON.stringify(data)
+                    }
+                );
+
+
+            const text =
+                await response.text();
+
+
+            let result;
+
+
+            try {
+
+                result =
+                    JSON.parse(text);
+
+            } catch (error) {
+
+                console.error(
+                    "Invalid server response:",
+                    text
+                );
+
+                throw new Error(
+                    "Server returned an invalid response."
+                );
+
+            }
+
+
+            if (
+                !response.ok ||
+                result.success === false
+            ) {
+
+                throw new Error(
+                    result.message ||
+                    "Request failed."
+                );
+
+            }
+
+
+            return result;
+
+        } catch (error) {
+
+            console.error(error);
+
+            showError(
+                error.message
+            );
+
+            throw error;
+
+        }
+
+    }
+
+
+    /* =========================================================
+       TAB SWITCHING
+    ========================================================== */
+
+    function switchTab(
+        tabId,
+        button
+    ) {
+
+        document
+            .querySelectorAll(
+                ".tab-content"
+            )
+            .forEach(section => {
+
+                section.classList.remove(
+                    "active"
+                );
+
+            });
+
+
+        document
+            .querySelectorAll(
+                ".tab-button"
+            )
+            .forEach(btn => {
+
+                btn.classList.remove(
+                    "active"
+                );
+
+            });
+
+
+        const target =
+            document.getElementById(
+                tabId
+            );
+
+
+        if (target) {
+
+            target.classList.add(
+                "active"
+            );
+
+        }
+
+
+        if (button) {
+
+            button.classList.add(
+                "active"
+            );
+
+        }
+
+
+        if (tabId === "monthly") {
+
+            const month =
+                document.getElementById(
+                    "monthlySummaryMonth"
+                ).value;
+
+            if (!month) {
+                setCurrentMonth();
+            }
+
+        }
+
+
+        if (tabId === "top3") {
+
+            const month =
+                document.getElementById(
+                    "top3Month"
+                ).value;
+
+            if (!month) {
+
+                const current =
+                    getCurrentMonth();
+
+                document.getElementById(
+                    "top3Month"
+                ).value =
+                    current;
+
+                loadTop3();
+
+            }
+
+        }
+
+    }
+
+
+    /* =========================================================
+       LOAD ADMIN DATA
+    ========================================================== */
+
+    async function loadAdminData() {
+
+        try {
+
+            const result =
+                await apiRequest(
+                    "bootstrap",
+                    {}
+                );
+
+
+            const data =
+                result.data || {};
+
+
+            adminData.admin =
+                data.admin || {};
+
+
+            adminData.dashboard =
+                data.dashboard || {};
+
+
+            adminData.submissions =
+                Array.isArray(
+                    data.submissions
+                )
+                    ? data.submissions
+                    : [];
+
+
+            adminData.promotions =
+                Array.isArray(
+                    data.promotions
+                )
+                    ? data.promotions
+                    : [];
+
+
+            adminData.users =
+                Array.isArray(
+                    data.users
+                )
+                    ? data.users
+                    : [];
+
+
+            adminData.monthlySummary =
+                Array.isArray(
+                    data.monthlySummary
+                )
+                    ? data.monthlySummary
+                    : [];
+
+
+            adminData.top3 =
+                Array.isArray(
+                    data.top3
+                )
+                    ? data.top3
+                    : [];
+
+
+            renderAdmin();
+
+
+        } catch (error) {
+
+            console.error(
+                "Failed to load admin data:",
+                error
+            );
+
+        }
+
+    }
+
+
+    async function refreshAll() {
+
+        await loadAdminData();
+
+        populateSubmissionFilters();
+
+        const month =
+            document.getElementById(
+                "monthlySummaryMonth"
+            ).value;
+
+
+        if (month) {
+
+            await loadMonthlySummary();
+
+        }
+
+
+        const topMonth =
+            document.getElementById(
+                "top3Month"
+            ).value;
+
+
+        if (topMonth) {
+
+            await loadTop3();
+
+        }
+
+    }
+
+
+    function renderAdmin() {
+
+        renderAdminInfo();
+        renderDashboard();
+        renderSubmissions();
+        renderPromotions();
+        renderUsers();
+        renderRecentSubmissions();
+        populateSubmissionFilters();
+
+    }
+
+
+    /* =========================================================
+       ADMIN INFO
+    ========================================================== */
+
+    function renderAdminInfo() {
+
+        const admin =
+            adminData.admin || {};
+
+
+        document.getElementById(
+            "adminName"
+        ).textContent =
+            getValue(
+                admin,
+                [
+                    "staff_name",
+                    "name"
+                ],
+                "Admin"
+            );
+
+
+        document.getElementById(
+            "adminSMC"
+        ).textContent =
+            getValue(
+                admin,
+                [
+                    "sales_man_code",
+                    "SMC",
+                    "smc"
+                ],
+                ""
+            );
+
+    }
+
+
+    /* =========================================================
+       DASHBOARD
+    ========================================================== */
+
+    function renderDashboard() {
+
+        const dashboard =
+            adminData.dashboard || {};
+
+
+        const total =
+            Number(
+                getValue(
+                    dashboard,
+                    [
+                        "total",
+                        "total_submissions"
+                    ],
+                    adminData.submissions.length
+                )
+            );
+
+
+        const pending =
+            Number(
+                getValue(
+                    dashboard,
+                    [
+                        "pending",
+                        "pending_count"
+                    ],
+                    adminData.submissions
+                        .filter(
+                            x =>
+                                getStatus(x) ===
+                                "pending"
+                        )
+                        .length
+                )
+            );
+
+
+        const approved =
+            Number(
+                getValue(
+                    dashboard,
+                    [
+                        "approved",
+                        "approved_count"
+                    ],
+                    adminData.submissions
+                        .filter(
+                            x =>
+                                getStatus(x) ===
+                                "approved"
+                        )
+                        .length
+                )
+            );
+
+
+        const rejected =
+            Number(
+                getValue(
+                    dashboard,
+                    [
+                        "rejected",
+                        "rejected_count"
+                    ],
+                    adminData.submissions
+                        .filter(
+                            x =>
+                                getStatus(x) ===
+                                "rejected"
+                        )
+                        .length
+                )
+            );
+
+
+        const individual =
+            Number(
+                getValue(
+                    dashboard,
+                    [
+                        "individual",
+                        "individual_total"
+                    ],
+                    0
+                )
+            );
+
+
+        const bundle =
+            Number(
+                getValue(
+                    dashboard,
+                    [
+                        "bundle",
+                        "bundle_total"
+                    ],
+                    0
+                )
+            );
+
+
+        document.getElementById(
+            "statTotal"
+        ).textContent =
+            Number.isFinite(total)
+                ? total
+                : 0;
+
+
+        document.getElementById(
+            "statPending"
+        ).textContent =
+            Number.isFinite(pending)
+                ? pending
+                : 0;
+
+
+        document.getElementById(
+            "statApproved"
+        ).textContent =
+            Number.isFinite(approved)
+                ? approved
+                : 0;
+
+
+        document.getElementById(
+            "statRejected"
+        ).textContent =
+            Number.isFinite(rejected)
+                ? rejected
+                : 0;
+
+
+        document.getElementById(
+            "statIndividual"
+        ).textContent =
+            money(individual);
+
+
+        document.getElementById(
+            "statBundle"
+        ).textContent =
+            money(bundle);
+
+    }
+
+
+    /* =========================================================
+       SUBMISSION FILTERS
+    ========================================================== */
+
+    function populateSubmissionFilters() {
+
+        const staffSelect =
+            document.getElementById(
+                "submissionStaff"
+            );
+
+
+        const outletSelect =
+            document.getElementById(
+                "submissionOutlet"
+            );
+
+
+        const currentStaff =
+            staffSelect.value;
+
+
+        const currentOutlet =
+            outletSelect.value;
+
+
+        const staffMap =
+            new Map();
+
+
+        const outletSet =
+            new Set();
+
+
+        adminData.submissions
+            .forEach(item => {
+
+                const smc =
+                    String(
+                        getSMC(item)
+                    );
+
+
+                const name =
+                    String(
+                        getStaffName(item)
+                    );
+
+
+                if (
+                    smc !== "-" &&
+                    smc !== ""
+                ) {
+
+                    staffMap.set(
+                        smc,
+                        name +
+                        " (" +
+                        smc +
+                        ")"
+                    );
+
+                }
+
+
+                const outlet =
+                    String(
+                        getOutlet(item)
+                    );
+
+
+                if (
+                    outlet !== "-" &&
+                    outlet !== ""
+                ) {
+
+                    outletSet.add(
+                        outlet
+                    );
+
+                }
+
+            });
+
+
+        staffSelect.innerHTML =
+            `<option value="">All Staff</option>`;
+
+
+        Array.from(
+            staffMap.entries()
+        )
+        .sort(
+            (a, b) =>
+                a[1].localeCompare(b[1])
+        )
+        .forEach(
+            ([smc, label]) => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    smc;
+
+                option.textContent =
+                    label;
+
+                staffSelect.appendChild(
+                    option
+                );
+
+            }
+        );
+
+
+        outletSelect.innerHTML =
+            `<option value="">All Outlets</option>`;
+
+
+        Array.from(
+            outletSet
+        )
+        .sort()
+        .forEach(outlet => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+            option.value =
+                outlet;
+
+            option.textContent =
+                outlet;
+
+            outletSelect.appendChild(
+                option
+            );
+
+        });
+
+
+        if (
+            Array.from(
+                staffSelect.options
+            )
+            .some(
+                x =>
+                    x.value ===
+                    currentStaff
+            )
+        ) {
+
+            staffSelect.value =
+                currentStaff;
+
+        }
+
+
+        if (
+            Array.from(
+                outletSelect.options
+            )
+            .some(
+                x =>
+                    x.value ===
+                    currentOutlet
+            )
+        ) {
+
+            outletSelect.value =
+                currentOutlet;
+
+        }
+
+    }
+
+
+    /* =========================================================
+       FILTER DATE
+    ========================================================== */
+
+    function normalizeDate(
+        value
+    ) {
+
+        if (!value) {
+            return "";
+        }
+
+
+        const stringValue =
+            String(value);
+
+
+        return stringValue
+            .substring(0, 10);
+
+    }
+
+
+    /* =========================================================
+       RENDER SUBMISSIONS
+    ========================================================== */
+
+    function renderSubmissions() {
+
+        const body =
+            document.getElementById(
+                "submissionsBody"
+            );
+
+
+        const search =
+            document.getElementById(
+                "submissionSearch"
+            ).value
+            .trim()
+            .toLowerCase();
+
+
+        const statusFilter =
+            document.getElementById(
+                "submissionStatus"
+            ).value
+            .toLowerCase();
+
+
+        const typeFilter =
+            document.getElementById(
+                "submissionType"
+            ).value
+            .toLowerCase();
+
+
+        const monthFilter =
+            document.getElementById(
+                "submissionMonth"
+            ).value;
+
+
+        const dayFilter =
+            document.getElementById(
+                "submissionDay"
+            ).value;
+
+
+        const staffFilter =
+            document.getElementById(
+                "submissionStaff"
+            ).value;
+
+
+        const outletFilter =
+            document.getElementById(
+                "submissionOutlet"
+            ).value;
+
+
+        const filtered =
+            adminData.submissions
+                .filter(item => {
+
+                    const searchable = [
+
+                        getStaffName(item),
+                        getSMC(item),
+                        getOutlet(item),
+                        getPromoName(item),
+                        getSubmissionId(item)
+
+                    ]
+                    .join(" ")
+                    .toLowerCase();
+
+
+                    const matchesSearch =
+                        !search ||
+                        searchable.includes(
+                            search
+                        );
+
+
+                    const matchesStatus =
+                        !statusFilter ||
+                        getStatus(item) ===
+                        statusFilter;
+
+
+                    const matchesType =
+                        !typeFilter ||
+                        getType(item) ===
+                        typeFilter;
+
+
+                    const date =
+                        normalizeDate(
+                            getSubmissionDate(item)
+                        );
+
+
+                    const matchesMonth =
+                        !monthFilter ||
+                        date.startsWith(
+                            monthFilter
+                        );
+
+
+                    const matchesDay =
+                        !dayFilter ||
+                        date ===
+                        dayFilter;
+
+
+                    const matchesStaff =
+                        !staffFilter ||
+                        String(
+                            getSMC(item)
+                        ) ===
+                        String(
+                            staffFilter
+                        );
+
+
+                    const matchesOutlet =
+                        !outletFilter ||
+                        String(
+                            getOutlet(item)
+                        ) ===
+                        String(
+                            outletFilter
+                        );
+
+
+                    return (
+                        matchesSearch &&
+                        matchesStatus &&
+                        matchesType &&
+                        matchesMonth &&
+                        matchesDay &&
+                        matchesStaff &&
+                        matchesOutlet
+                    );
+
+                });
+
+
+        if (!filtered.length) {
+
+            body.innerHTML = `
+                <tr>
+                    <td
+                        colspan="12"
+                        class="empty-row">
+                        No submissions found.
+                    </td>
+                </tr>
+            `;
+
+            return;
+
+        }
+
+
+        body.innerHTML =
+            filtered.map(item => {
+
+                const id =
+                    Number(
+                        getSubmissionId(item)
+                    );
+
+
+                return `
+
+                    <tr>
+
+                        <td>
+                            ${escapeHtml(id)}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                getStaffName(item)
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                getSMC(item)
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                getOutlet(item)
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                getPromoName(item)
+                            )}
+                        </td>
+
+                        <td>
+                            ${formatType(
+                                getType(item)
+                            )}
+                        </td>
+
+                        <td>
+                            ${getQuantity(item)}
+                        </td>
+
+                        <td>
+                            ${money(
+                                getRate(item)
+                            )}
+                        </td>
+
+                        <td>
+                            <strong>
+                                ${money(
+                                    getAmount(item)
+                                )}
+                            </strong>
+                        </td>
+
+                        <td>
+                            ${formatStatus(
+                                getStatus(item)
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                getSubmissionDate(item)
+                            )}
+                        </td>
+
+                        <td>
+
+                            <button
+                                class="btn btn-light btn-small"
+                                onclick="viewSubmission(${id})">
+                                View
+                            </button>
+
+                        </td>
+
+                    </tr>
+
+                `;
+
+            }).join("");
+
+    }
+
+
+    /* =========================================================
+       RECENT SUBMISSIONS
+    ========================================================== */
+
+    function renderRecentSubmissions() {
+
+        const body =
+            document.getElementById(
+                "recentSubmissionsBody"
+            );
+
+
+        const recent =
+            adminData.submissions
+                .slice(0, 10);
+
+
+        if (!recent.length) {
+
+            body.innerHTML = `
+                <tr>
+                    <td
+                        colspan="9"
+                        class="empty-row">
+                        No submissions found.
+                    </td>
+                </tr>
+            `;
+
+            return;
+
+        }
+
+
+        body.innerHTML =
+            recent.map(item => {
+
+                const id =
+                    Number(
+                        getSubmissionId(item)
+                    );
+
+
+                return `
+
+                    <tr>
+
+                        <td>
+                            ${escapeHtml(id)}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                getStaffName(item)
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                getPromoName(item)
+                            )}
+                        </td>
+
+                        <td>
+                            ${formatType(
+                                getType(item)
+                            )}
+                        </td>
+
+                        <td>
+                            ${getQuantity(item)}
+                        </td>
+
+                        <td>
+                            ${money(
+                                getAmount(item)
+                            )}
+                        </td>
+
+                        <td>
+                            ${formatStatus(
+                                getStatus(item)
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                getSubmissionDate(item)
+                            )}
+                        </td>
+
+                        <td>
+
+                            <button
+                                class="btn btn-light btn-small"
+                                onclick="viewSubmission(${id})">
+                                View
+                            </button>
+
+                        </td>
+
+                    </tr>
+
+                `;
+
+            }).join("");
+
+    }
+
+
+    async function loadSubmissions() {
+
+        try {
+
+            const result =
+                await apiRequest(
+                    "get_submissions",
+                    {}
+                );
+
+
+            adminData.submissions =
+                Array.isArray(
+                    result.data
+                )
+                    ? result.data
+                    : [];
+
+
+            populateSubmissionFilters();
+            renderSubmissions();
+            renderRecentSubmissions();
+
+        } catch (error) {
+
+            console.error(error);
+
+        }
+
+    }
+
+
+    /* =========================================================
+       VIEW SUBMISSION
+    ========================================================== */
+
+    async function viewSubmission(id) {
+
+        const modal =
+            document.getElementById(
+                "submissionModal"
+            );
+
+
+        const details =
+            document.getElementById(
+                "submissionDetails"
+            );
+
+
+        details.innerHTML = `
+            <div class="loading">
+                Loading submission...
+            </div>
+        `;
+
+
+        modal.classList.add(
+            "show"
+        );
+
+
+        try {
+
+            const result =
+                await apiRequest(
+                    "get_submission",
+                    {
+                        incentive_id:
+                            Number(id)
+                    }
+                );
+
+
+            const item =
+                result.data || {};
+
+
+            const submissionId =
+                Number(
+                    getSubmissionId(item) ||
+                    id
+                );
+
+
+            const status =
+                getStatus(item);
+
+
+            const proof =
+                getValue(
+                    item,
+                    [
+                        "proof",
+                        "proof_image",
+                        "proof_path"
+                    ],
+                    ""
+                );
+
+
+            let proofHtml;
+
+
+            if (proof) {
+
+                proofHtml = `
+
+                    <div class="proof-container">
+
+                        <h3>
+                            Proof
+                        </h3>
+
+                        <img
+                            src="${escapeHtml(proof)}"
+                            alt="Proof">
+
+                    </div>
+
+                `;
+
+            } else {
+
+                proofHtml = `
+
+                    <div
+                        class="proof-container">
+
+                        <strong>
+                            Proof:
+                        </strong>
+
+                        No proof uploaded.
+
+                    </div>
+
+                `;
+
+            }
+
+
+            let actions = "";
+
+
+            /*
+             * APPROVE + REJECT ONLY FOR PENDING
+             */
+
+            if (
+                status === "pending"
+            ) {
+
+                actions += `
+
+                    <button
+                        class="btn btn-success"
+                        onclick="approveFromView(${submissionId})">
+                        Approve
+                    </button>
+
+                    <button
+                        class="btn btn-danger"
+                        onclick="rejectFromView(${submissionId})">
+                        Reject
+                    </button>
+
+                `;
+
+            }
+
+
+            /*
+             * EDIT + DELETE ALWAYS AVAILABLE
+             */
+
+            actions += `
+
+                <button
+                    class="btn btn-warning"
+                    onclick="editFromView(${submissionId})">
+                    Edit
+                </button>
+
+                <button
+                    class="btn btn-danger"
+                    onclick="deleteFromView(${submissionId})">
+                    Delete
+                </button>
+
+                <button
+                    class="btn btn-light"
+                    onclick="closeModal('submissionModal')">
+                    Close
+                </button>
+
+            `;
+
+
+            details.innerHTML = `
+
+                <div class="details-grid">
+
+                    <div class="detail-item">
+
+                        <div class="detail-label">
+                            Submission ID
+                        </div>
+
+                        <div class="detail-value">
+                            ${escapeHtml(
+                                submissionId
+                            )}
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-item">
+
+                        <div class="detail-label">
+                            Status
+                        </div>
+
+                        <div class="detail-value">
+                            ${formatStatus(
+                                status
+                            )}
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-item">
+
+                        <div class="detail-label">
+                            Staff Name
+                        </div>
+
+                        <div class="detail-value">
+                            ${escapeHtml(
+                                getStaffName(item)
+                            )}
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-item">
+
+                        <div class="detail-label">
+                            SMC
+                        </div>
+
+                        <div class="detail-value">
+                            ${escapeHtml(
+                                getSMC(item)
+                            )}
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-item">
+
+                        <div class="detail-label">
+                            Outlet
+                        </div>
+
+                        <div class="detail-value">
+                            ${escapeHtml(
+                                getOutlet(item)
+                            )}
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-item">
+
+                        <div class="detail-label">
+                            Promotion
+                        </div>
+
+                        <div class="detail-value">
+                            ${escapeHtml(
+                                getPromoName(item)
+                            )}
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-item">
+
+                        <div class="detail-label">
+                            Type
+                        </div>
+
+                        <div class="detail-value">
+                            ${formatType(
+                                getType(item)
+                            )}
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-item">
+
+                        <div class="detail-label">
+                            Rate
+                        </div>
+
+                        <div class="detail-value">
+                            ${money(
+                                getRate(item)
+                            )}
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-item">
+
+                        <div class="detail-label">
+                            Quantity
+                        </div>
+
+                        <div class="detail-value">
+                            ${getQuantity(item)}
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-item">
+
+                        <div class="detail-label">
+                            Total Amount
+                        </div>
+
+                        <div class="detail-value">
+                            ${money(
+                                getAmount(item)
+                            )}
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-item">
+
+                        <div class="detail-label">
+                            Submission Date
+                        </div>
+
+                        <div class="detail-value">
+                            ${escapeHtml(
+                                getSubmissionDate(item)
+                            )}
+                        </div>
+
+                    </div>
+
+
+                    <div class="detail-item">
+
+                        <div class="detail-label">
+                            Rejection Reason
+                        </div>
+
+                        <div class="detail-value">
+                            ${escapeHtml(
+                                getValue(
+                                    item,
+                                    [
+                                        "rejection_reason",
+                                        "reason"
+                                    ],
+                                    "-"
+                                )
+                            )}
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                ${proofHtml}
+
+
+                <div
+                    class="form-actions"
+                    style="justify-content:flex-start;">
+
+                    ${actions}
+
+                </div>
+
+            `;
+
+        } catch (error) {
+
+            details.innerHTML = `
+
+                <div
+                    style="
+                        background:#fee2e2;
+                        color:#991b1b;
+                        padding:12px;
+                        border-radius:6px;
+                    ">
+
+                    ${escapeHtml(
+                        error.message
+                    )}
+
+                </div>
+
+            `;
+
+        }
+
+    }
+
+
+    /* =========================================================
+       VIEW ACTIONS
+    ========================================================== */
+
+    async function approveFromView(id) {
+
+        closeModal(
+            "submissionModal"
+        );
+
+        await approveSubmission(
+            id
+        );
+
+    }
+
+
+    async function rejectFromView(id) {
+
+        closeModal(
+            "submissionModal"
+        );
+
+        await rejectSubmission(
+            id
+        );
+
+    }
+
+
+    function editFromView(id) {
+
+        closeModal(
+            "submissionModal"
+        );
+
+        openEditSubmission(
+            id
+        );
+
+    }
+
+
+    async function deleteFromView(id) {
+
+        closeModal(
+            "submissionModal"
+        );
+
+        await deleteSubmission(
+            id
+        );
+
+    }
+
+
+    /* =========================================================
+       APPROVE
+    ========================================================== */
+
+    async function approveSubmission(id) {
+
+        if (
+            !confirm(
+                "Are you sure you want to approve this submission?"
+            )
+        ) {
+            return;
+        }
+
+
+        try {
+
+            await apiRequest(
+                "approve",
+                {
+                    incentive_id:
+                        Number(id)
+                }
+            );
+
+
+            alert(
+                "Submission approved successfully."
+            );
+
+
+            await refreshAll();
+
+        } catch (error) {
+
+            console.error(error);
+
+        }
+
+    }
+
+
+    /* =========================================================
+       REJECT
+    ========================================================== */
+
+    async function rejectSubmission(id) {
+
+        const reason =
+            prompt(
+                "Enter rejection reason:"
+            );
+
+
+        if (
+            reason === null
+        ) {
+            return;
+        }
+
+
+        if (
+            !reason.trim()
+        ) {
+
+            alert(
+                "Rejection reason is required."
+            );
+
+            return;
+
+        }
+
+
+        try {
+
+            await apiRequest(
+                "reject",
+                {
+                    incentive_id:
+                        Number(id),
+
+                    rejection_reason:
+                        reason.trim()
+                }
+            );
+
+
+            alert(
+                "Submission rejected successfully."
+            );
+
+
+            await refreshAll();
+
+        } catch (error) {
+
+            console.error(error);
+
+        }
+
+    }
+
+
+    /* =========================================================
+       EDIT SUBMISSION
+    ========================================================== */
+
+    function openEditSubmission(id) {
+
+        const item =
+            adminData.submissions.find(
+                x =>
+                    Number(
+                        getSubmissionId(x)
+                    ) ===
+                    Number(id)
+            );
+
+
+        if (!item) {
+
+            alert(
+                "Submission not found."
+            );
+
+            return;
+
+        }
+
+
+        document.getElementById(
+            "editSubmissionId"
+        ).value =
+            Number(id);
+
+
+        document.getElementById(
+            "editSubmissionQuantity"
+        ).value =
+            getQuantity(item);
+
+
+        document.getElementById(
+            "editSubmissionStatus"
+        ).value =
+            getStatus(item) ||
+            "pending";
+
+
+        document.getElementById(
+            "editSubmissionReason"
+        ).value =
+            getValue(
+                item,
+                [
+                    "rejection_reason",
+                    "reason"
+                ],
+                ""
+            );
+
+
+        populatePromotionDropdown(
+            "editSubmissionPromo",
+            getPromotionId(item)
+        );
+
+
+        document.getElementById(
+            "editSubmissionModal"
+        ).classList.add(
+            "show"
+        );
+
+    }
+
+
+    async function saveEditSubmission(
+        event
+    ) {
+
+        event.preventDefault();
+
+
+        const id =
+            Number(
+                document.getElementById(
+                    "editSubmissionId"
+                ).value
+            );
+
+
+        const promoId =
+            Number(
+                document.getElementById(
+                    "editSubmissionPromo"
+                ).value
+            );
+
+
+        const quantity =
+            Number(
+                document.getElementById(
+                    "editSubmissionQuantity"
+                ).value
+            );
+
+
+        const status =
+            document.getElementById(
+                "editSubmissionStatus"
+            ).value;
+
+
+        const reason =
+            document.getElementById(
+                "editSubmissionReason"
+            ).value
+            .trim();
+
+
+        if (!id) {
+
+            alert(
+                "Invalid submission ID."
+            );
+
+            return;
+
+        }
+
+
+        if (
+            !promoId
+        ) {
+
+            alert(
+                "Please select a promotion."
+            );
+
+            return;
+
+        }
+
+
+        if (
+            !quantity ||
+            quantity < 1
+        ) {
+
+            alert(
+                "Quantity must be at least 1."
+            );
+
+            return;
+
+        }
+
+
+        if (
+            status === "rejected" &&
+            !reason
+        ) {
+
+            alert(
+                "Rejection reason is required."
+            );
+
+            return;
+
+        }
+
+
+        try {
+
+            await apiRequest(
+                "edit_submission",
+                {
+                    incentive_id: id,
+                    promo_id: promoId,
+                    quantity: quantity,
+                    status: status,
+                    rejection_reason:
+                        reason
+                }
+            );
+
+
+            closeModal(
+                "editSubmissionModal"
+            );
+
+
+            alert(
+                "Submission updated successfully."
+            );
+
+
+            await refreshAll();
+
+        } catch (error) {
+
+            console.error(error);
+
+        }
+
+    }
+
+
+    /* =========================================================
+       DELETE SUBMISSION
+    ========================================================== */
+
+    async function deleteSubmission(id) {
+
+        if (
+            !confirm(
+                "Are you sure you want to delete this submission?"
+            )
+        ) {
+            return;
+        }
+
+
+        try {
+
+            await apiRequest(
+                "delete_submission",
+                {
+                    incentive_id:
+                        Number(id)
+                }
+            );
+
+
+            alert(
+                "Submission deleted successfully."
+            );
+
+
+            await refreshAll();
+
+        } catch (error) {
+
+            console.error(error);
+
+        }
+
+    }
+
+
+    /* =========================================================
+       PROMOTIONS
+    ========================================================== */
+
+    function renderPromotions() {
+
+        const body =
+            document.getElementById(
+                "promotionsBody"
+            );
+
+
+        if (
+            !adminData.promotions.length
+        ) {
+
+            body.innerHTML = `
+
+                <tr>
+
+                    <td
+                        colspan="8"
+                        class="empty-row">
+
+                        No promotions found.
+
+                    </td>
+
+                </tr>
+
+            `;
+
+            return;
+
+        }
+
+
+        body.innerHTML =
+            adminData.promotions
+                .map(promo => {
+
+                    const id =
+                        Number(
+                            getPromotionId(
+                                promo
+                            )
+                        );
+
+
+                    const name =
+                        getValue(
+                            promo,
+                            [
+                                "promo",
+                                "promotion",
+                                "promo_name",
+                                "promotion_name"
+                            ],
+                            "-"
+                        );
+
+
+                    const rate =
+                        Number(
+                            getValue(
+                                promo,
+                                [
+                                    "Rate",
+                                    "rate"
+                                ],
+                                0
+                            )
+                        );
+
+
+                    const type =
+                        String(
+                            getValue(
+                                promo,
+                                [
+                                    "type",
+                                    "promotion_type",
+                                    "promo_type"
+                                ],
+                                "individual"
+                            )
+                        )
+                        .toLowerCase();
+
+
+                    const startDate =
+                        getValue(
+                            promo,
+                            [
+                                "start_date",
+                                "startDate"
+                            ],
+                            "-"
+                        );
+
+
+                    const endDate =
+                        getValue(
+                            promo,
+                            [
+                                "end_date",
+                                "endDate"
+                            ],
+                            "-"
+                        );
+
+
+                    const items = [];
+
+
+                    for (
+                        let i = 1;
+                        i <= 5;
+                        i++
+                    ) {
+
+                        const value =
+                            getValue(
+                                promo,
+                                [
+                                    "item_" + i,
+                                    "item" + i
+                                ],
+                                ""
+                            );
+
+
+                        if (
+                            String(value).trim()
+                        ) {
+
+                            items.push(
+                                String(value).trim()
+                            );
+
+                        }
+
+                    }
+
+
+                    const bundleItems =
+                        items.length
+                            ? items
+                                .map(
+                                    x =>
+                                        escapeHtml(x)
+                                )
+                                .join(", ")
+                            : "-";
+
+
+                    return `
+
+                        <tr>
+
+                            <td>
+                                ${escapeHtml(id)}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(name)}
+                            </td>
+
+                            <td>
+                                ${money(rate)}
+                            </td>
+
+                            <td>
+                                ${formatType(type)}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(startDate)}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(endDate)}
+                            </td>
+
+                            <td>
+                                ${bundleItems}
+                            </td>
+
+                            <td>
+
+                                <button
+                                    class="btn btn-warning btn-small"
+                                    onclick="openEditPromotion(${id})">
+                                    Edit
+                                </button>
+
+                                <button
+                                    class="btn btn-danger btn-small"
+                                    onclick="deletePromotion(${id})">
+                                    Delete
+                                </button>
+
+                            </td>
+
+                        </tr>
+
+                    `;
+
+                })
+                .join("");
+
+    }
+
+
+    /* =========================================================
+       PROMOTION DROPDOWN
+    ========================================================== */
+
+    function populatePromotionDropdown(
+        elementId,
+        selectedId = ""
+    ) {
+
+        const select =
+            document.getElementById(
+                elementId
+            );
+
+
+        if (!select) {
+            return;
+        }
+
+
+        select.innerHTML =
+            `<option value="">
+                Select Promotion
+            </option>`;
+
+
+        adminData.promotions
+            .forEach(promo => {
+
+                const id =
+                    getPromotionId(
+                        promo
+                    );
+
+
+                const name =
+                    getValue(
+                        promo,
+                        [
+                            "promo",
+                            "promotion",
+                            "promo_name",
+                            "promotion_name"
+                        ],
+                        "Promotion"
+                    );
+
+
+                const type =
+                    getType(
+                        promo
+                    );
+
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                option.value =
+                    id;
+
+
+                option.textContent =
+                    name +
+                    " (" +
+                    type +
+                    ")";
+
+
+                if (
+                    String(id) ===
+                    String(selectedId)
+                ) {
+
+                    option.selected =
+                        true;
+
+                }
+
+
+                select.appendChild(
+                    option
+                );
+
+            });
+
+    }
+
+
+    /* =========================================================
+       ADD PROMOTION MODAL
+    ========================================================== */
+
+    function openAddPromotionModal() {
+
+        document.getElementById(
+            "promotionForm"
+        ).reset();
+
+
+        document.getElementById(
+            "editPromotionId"
+        ).value = "";
+
+
+        document.getElementById(
+            "promotionModalTitle"
+        ).textContent =
+            "Add Promotion";
+
+
+        document.getElementById(
+            "promotionType"
+        ).value =
+            "individual";
+
+
+        clearBundleFields();
+        toggleBundleFields();
+
+
+        document.getElementById(
+            "promotionModal"
+        ).classList.add(
+            "show"
+        );
+
+    }
+
+
+    function clearBundleFields() {
+
+        for (
+            let i = 1;
+            i <= 5;
+            i++
+        ) {
+
+            const input =
+                document.getElementById(
+                    "item_" + i
+                );
+
+
+            if (input) {
+
+                input.value = "";
+
+            }
+
+        }
+
+    }
+
+
+    function toggleBundleFields() {
+
+        const type =
+            document.getElementById(
+                "promotionType"
+            ).value;
+
+
+        const bundleFields =
+            document.getElementById(
+                "bundleFields"
+            );
+
+
+        if (
+            type === "bundle"
+        ) {
+
+            bundleFields.style.display =
+                "flex";
+
+        } else {
+
+            bundleFields.style.display =
+                "none";
+
+            clearBundleFields();
+
+        }
+
+    }
+
+
+    /* =========================================================
+       SAVE PROMOTION
+    ========================================================== */
+
+    async function savePromotion(
+        event
+    ) {
+
+        event.preventDefault();
+
+
+        const editId =
+            document.getElementById(
+                "editPromotionId"
+            ).value;
+
+
+        const name =
+            document.getElementById(
+                "promotionName"
+            ).value
+            .trim();
+
+
+        const rate =
+            Number(
+                document.getElementById(
+                    "promotionRate"
+                ).value
+            );
+
+
+        const type =
+            document.getElementById(
+                "promotionType"
+            ).value;
+
+
+        const startDate =
+            document.getElementById(
+                "promotionStartDate"
+            ).value;
+
+
+        const endDate =
+            document.getElementById(
+                "promotionEndDate"
+            ).value;
+
+
+        if (!name) {
+
+            alert(
+                "Promotion name is required."
+            );
+
+            return;
+
+        }
+
+
+        if (
+            !Number.isFinite(rate) ||
+            rate < 0
+        ) {
+
+            alert(
+                "Please enter a valid rate."
+            );
+
+            return;
+
+        }
+
+
+        /*
+         * IMPORTANT:
+         * Bundle items are NOT required individually.
+         * At least ONE item is required.
+         */
+
+        const bundleItems = {};
+
+
+        if (
+            type === "bundle"
+        ) {
+
+            for (
+                let i = 1;
+                i <= 5;
+                i++
+            ) {
+
+                const input =
+                    document.getElementById(
+                        "item_" + i
+                    );
+
+
+                const value =
+                    input
+                        ? input.value.trim()
+                        : "";
+
+
+                if (value !== "") {
+
+                    bundleItems[
+                        "item_" + i
+                    ] = value;
+
+                }
+
+            }
+
+
+            if (
+                Object.keys(
+                    bundleItems
+                ).length === 0
+            ) {
+
+                alert(
+                    "Please enter at least one bundle item."
+                );
+
+                return;
+
+            }
+
+        }
+
+
+        const payload = {
+
+            promo:
+                name,
+
+            Rate:
+                rate,
+
+            type:
+                type,
+
+            start_date:
+                startDate || null,
+
+            end_date:
+                endDate || null,
+
+            item_1:
+                bundleItems.item_1 || null,
+
+            item_2:
+                bundleItems.item_2 || null,
+
+            item_3:
+                bundleItems.item_3 || null,
+
+            item_4:
+                bundleItems.item_4 || null,
+
+            item_5:
+                bundleItems.item_5 || null
+
+        };
+
+
+        try {
+
+            let action;
+
+
+            if (editId) {
+
+                payload.promo_id =
+                    Number(editId);
+
+                action =
+                    "edit_promotion";
+
+            } else {
+
+                action =
+                    "add_promotion";
+
+            }
+
+
+            await apiRequest(
+                action,
+                payload
+            );
+
+
+            closeModal(
+                "promotionModal"
+            );
+
+
+            alert(
+                editId
+                    ? "Promotion updated successfully."
+                    : "Promotion added successfully."
+            );
+
+
+            await refreshAll();
+
+        } catch (error) {
+
+            console.error(error);
+
+        }
+
+    }
+
+
+    /* =========================================================
+       EDIT PROMOTION
+    ========================================================== */
+
+    function openEditPromotion(id) {
+
+        const promo =
+            adminData.promotions.find(
+                x =>
+                    Number(
+                        getPromotionId(x)
+                    ) ===
+                    Number(id)
+            );
+
+
+        if (!promo) {
+
+            alert(
+                "Promotion not found."
+            );
+
+            return;
+
+        }
+
+
+        document.getElementById(
+            "editPromotionId"
+        ).value =
+            Number(id);
+
+
+        document.getElementById(
+            "promotionModalTitle"
+        ).textContent =
+            "Edit Promotion";
+
+
+        document.getElementById(
+            "promotionName"
+        ).value =
+            getValue(
+                promo,
+                [
+                    "promo",
+                    "promotion",
+                    "promo_name",
+                    "promotion_name"
+                ],
+                ""
+            );
+
+
+        document.getElementById(
+            "promotionRate"
+        ).value =
+            getRate(promo);
+
+
+        document.getElementById(
+            "promotionType"
+        ).value =
+            getType(promo);
+
+
+        document.getElementById(
+            "promotionStartDate"
+        ).value =
+            normalizeDate(
+                getValue(
+                    promo,
+                    [
+                        "start_date",
+                        "startDate"
+                    ],
+                    ""
+                )
+            );
+
+
+        document.getElementById(
+            "promotionEndDate"
+        ).value =
+            normalizeDate(
+                getValue(
+                    promo,
+                    [
+                        "end_date",
+                        "endDate"
+                    ],
+                    ""
+                )
+            );
+
+
+        for (
+            let i = 1;
+            i <= 5;
+            i++
+        ) {
+
+            document.getElementById(
+                "item_" + i
+            ).value =
+                getValue(
+                    promo,
+                    [
+                        "item_" + i,
+                        "item" + i
+                    ],
+                    ""
+                );
+
+        }
+
+
+        toggleBundleFields();
+
+
+        document.getElementById(
+            "promotionModal"
+        ).classList.add(
+            "show"
+        );
+
+    }
+
+
+    /* =========================================================
+       DELETE PROMOTION
+    ========================================================== */
+
+    async function deletePromotion(
+        id
+    ) {
+
+        if (
+            !confirm(
+                "Are you sure you want to delete this promotion?"
+            )
+        ) {
+            return;
+        }
+
+
+        try {
+
+            await apiRequest(
+                "delete_promotion",
+                {
+                    promo_id:
+                        Number(id)
+                }
+            );
+
+
+            alert(
+                "Promotion deleted successfully."
+            );
+
+
+            await refreshAll();
+
+        } catch (error) {
+
+            console.error(error);
+
+        }
+
+    }
+
+
+    /* =========================================================
+       USERS
+    ========================================================== */
+
+    function renderUsers() {
+
+        const body =
+            document.getElementById(
+                "usersBody"
+            );
+
+
+        if (
+            !adminData.users.length
+        ) {
+
+            body.innerHTML = `
+
+                <tr>
+
+                    <td
+                        colspan="5"
+                        class="empty-row">
+
+                        No staff found.
+
+                    </td>
+
+                </tr>
+
+            `;
+
+            return;
+
+        }
+
+
+        body.innerHTML =
+            adminData.users
+                .map(user => {
+
+                    const name =
+                        getValue(
+                            user,
+                            [
+                                "staff_name",
+                                "name"
+                            ],
+                            "-"
+                        );
+
+
+                    const smc =
+                        getValue(
+                            user,
+                            [
+                                "sales_man_code",
+                                "SMC",
+                                "smc"
+                            ],
+                            "-"
+                        );
+
+
+                    const outlet =
+                        getValue(
+                            user,
+                            [
+                                "outlet",
+                                "outlet_name"
+                            ],
+                            "-"
+                        );
+
+
+                    const role =
+                        getValue(
+                            user,
+                            [
+                                "role"
+                            ],
+                            "staff"
+                        );
+
+
+                    return `
+
+                        <tr>
+
+                            <td>
+                                ${escapeHtml(name)}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(smc)}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(outlet)}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(role)}
+                            </td>
+
+                            <td>
+
+                                <button
+                                    class="btn btn-warning btn-small"
+                                    onclick="openEditUser('${escapeHtml(smc)}')">
+                                    Edit
+                                </button>
+
+                                <button
+                                    class="btn btn-danger btn-small"
+                                    onclick="deleteUser('${escapeHtml(smc)}')">
+                                    Delete
+                                </button>
+
+                            </td>
+
+                        </tr>
+
+                    `;
+
+                })
+                .join("");
+
+    }
+
+
+    /* =========================================================
+       ADD USER
+    ========================================================== */
+
+    function openAddUserModal() {
+
+        document.getElementById(
+            "userForm"
+        ).reset();
+
+
+        document.getElementById(
+            "editUserSMC"
+        ).value = "";
+
+
+        document.getElementById(
+            "userSMC"
+        ).disabled = false;
+
+
+        document.getElementById(
+            "userModalTitle"
+        ).textContent =
+            "Add Staff";
+
+
+        document.getElementById(
+            "userModal"
+        ).classList.add(
+            "show"
+        );
+
+    }
+
+
+    /* =========================================================
+       EDIT USER
+    ========================================================== */
+
+    function openEditUser(
+        smc
+    ) {
+
+        const user =
+            adminData.users.find(
+                x =>
+                    String(
+                        getValue(
+                            x,
+                            [
+                                "sales_man_code",
+                                "SMC",
+                                "smc"
+                            ],
+                            ""
+                        )
+                    ) ===
+                    String(smc)
+            );
+
+
+        if (!user) {
+
+            alert(
+                "Staff not found."
+            );
+
+            return;
+
+        }
+
+
+        document.getElementById(
+            "editUserSMC"
+        ).value =
+            smc;
+
+
+        document.getElementById(
+            "userName"
+        ).value =
+            getValue(
+                user,
+                [
+                    "staff_name",
+                    "name"
+                ],
+                ""
+            );
+
+
+        document.getElementById(
+            "userSMC"
+        ).value =
+            smc;
+
+
+        document.getElementById(
+            "userOutlet"
+        ).value =
+            getValue(
+                user,
+                [
+                    "outlet",
+                    "outlet_name"
+                ],
+                ""
+            );
+
+
+        document.getElementById(
+            "userRole"
+        ).value =
+            getValue(
+                user,
+                [
+                    "role"
+                ],
+                "staff"
+            );
+
+
+        /*
+         * SMC acts as the key,
+         * so don't allow it to be changed
+         * during editing.
+         */
+
+        document.getElementById(
+            "userSMC"
+        ).disabled = true;
+
+
+        document.getElementById(
+            "userModalTitle"
+        ).textContent =
+            "Edit Staff";
+
+
+        document.getElementById(
+            "userModal"
+        ).classList.add(
+            "show"
+        );
+
+    }
+
+
+    /* =========================================================
+       SAVE USER
+    ========================================================== */
+
+    async function saveUser(
+        event
+    ) {
+
+        event.preventDefault();
+
+
+        const editSMC =
+            document.getElementById(
+                "editUserSMC"
+            ).value
+            .trim();
+
+
+        const name =
+            document.getElementById(
+                "userName"
+            ).value
+            .trim();
+
+
+        const smc =
+            document.getElementById(
+                "userSMC"
+            ).value
+            .trim();
+
+
+        const outlet =
+            document.getElementById(
+                "userOutlet"
+            ).value
+            .trim();
+
+
+        const role =
+            document.getElementById(
+                "userRole"
+            ).value;
+
+
+        if (!name) {
+
+            alert(
+                "Staff name is required."
+            );
+
+            return;
+
+        }
+
+
+        if (!smc) {
+
+            alert(
+                "Sales Man Code is required."
+            );
+
+            return;
+
+        }
+
+
+        if (!outlet) {
+
+            alert(
+                "Outlet is required."
+            );
+
+            return;
+
+        }
+
+
+        const payload = {
+
+            staff_name:
+                name,
+
+            sales_man_code:
+                smc,
+
+            outlet:
+                outlet,
+
+            role:
+                role
+
+        };
+
+
+        try {
+
+            const action =
+                editSMC
+                    ? "edit_user"
+                    : "add_user";
+
+
+            if (editSMC) {
+
+                payload.original_smc =
+                    editSMC;
+
+            }
+
+
+            await apiRequest(
+                action,
+                payload
+            );
+
+
+            closeModal(
+                "userModal"
+            );
+
+
+            alert(
+                editSMC
+                    ? "Staff updated successfully."
+                    : "Staff added successfully."
+            );
+
+
+            await refreshAll();
+
+        } catch (error) {
+
+            console.error(error);
+
+        }
+
+    }
+
+
+    /* =========================================================
+       DELETE USER
+    ========================================================== */
+
+    async function deleteUser(
+        smc
+    ) {
+
+        if (
+            !confirm(
+                "Are you sure you want to delete this staff member?"
+            )
+        ) {
+            return;
+        }
+
+
+        try {
+
+            await apiRequest(
+                "delete_user",
+                {
+                    sales_man_code:
+                        String(smc)
+                }
+            );
+
+
+            alert(
+                "Staff deleted successfully."
+            );
+
+
+            await refreshAll();
+
+        } catch (error) {
+
+            console.error(error);
+
+        }
+
+    }
+
+
+    /* =========================================================
+       MONTH HELPERS
+    ========================================================== */
+
+    function getCurrentMonth() {
+
+        const now =
+            new Date();
+
+
+        const year =
+            now.getFullYear();
+
+
+        const month =
+            String(
+                now.getMonth() + 1
+            )
+            .padStart(2, "0");
+
+
+        return (
+            year +
+            "-" +
+            month
+        );
+
+    }
+
+
+    function setCurrentMonth() {
+
+        const month =
+            getCurrentMonth();
+
+
+        document.getElementById(
+            "monthlySummaryMonth"
+        ).value =
+            month;
+
+
+        loadMonthlySummary();
+
+    }
+
+
+    /* =========================================================
+       MONTHLY SUMMARY
+    ========================================================== */
+
+    async function loadMonthlySummary() {
+
+        const month =
+            document.getElementById(
+                "monthlySummaryMonth"
+            ).value;
+
+
+        if (!month) {
+
+            document.getElementById(
+                "monthlySummaryBody"
+            ).innerHTML = `
+
+                <tr>
+
+                    <td
+                        colspan="6"
+                        class="loading">
+
+                        Select a month.
+
+                    </td>
+
+                </tr>
+
+            `;
+
+            return;
+
+        }
+
+
+        const [year, monthNumber] =
+            month.split("-");
+
+
+        const date =
+            new Date(
+                Number(year),
+                Number(monthNumber) - 1,
+                1
+            );
+
+
+        const monthName =
+            date.toLocaleString(
+                "en-US",
+                {
+                    month: "long"
+                }
+            );
+
+
+        document.getElementById(
+            "monthlySummaryTitle"
+        ).textContent =
+            monthName +
+            " " +
+            year +
+            " Monthly Summary";
+
+
+        document.getElementById(
+            "monthlySummaryBody"
+        ).innerHTML = `
+
+            <tr>
+
+                <td
+                    colspan="6"
+                    class="loading">
+
+                    Loading...
+
+                </td>
+
+            </tr>
+
+        `;
+
+
+        try {
+
+            const result =
+                await apiRequest(
+                    "monthly_summary",
+                    {
+                        month:
+                            month
+                    }
+                );
+
+
+            let rows =
+                Array.isArray(
+                    result.data
+                )
+                    ? result.data
+                    : [];
+
+
+            /*
+             * Frontend fallback:
+             * if admin.php returns raw
+             * approved submissions,
+             * calculate the monthly
+             * totals here.
+             */
+
+            if (
+                rows.length &&
+                (
+                    rows[0].incentive_id !== undefined ||
+                    rows[0].submission_id !== undefined
+                )
+            ) {
+
+                rows =
+                    buildMonthlySummary(
+                        rows,
+                        month
+                    );
+
+            }
+
+
+            adminData.monthlySummary =
+                rows;
+
+
+            renderMonthlySummary(
+                rows
+            );
+
+
+        } catch (error) {
+
+            console.error(error);
+
+
+            /*
+             * Fallback using currently
+             * loaded submissions.
+             */
+
+            const rows =
+                buildMonthlySummary(
+                    adminData.submissions,
+                    month
+                );
+
+
+            renderMonthlySummary(
+                rows
+            );
+
+        }
+
+    }
+
+
+    /* =========================================================
+       BUILD MONTHLY SUMMARY
+    ========================================================== */
+
+    function buildMonthlySummary(
+        submissions,
+        selectedMonth
+    ) {
+
+        const map =
+            new Map();
+
+
+        submissions
+            .filter(item => {
+
+                const status =
+                    getStatus(item);
+
+
+                const date =
+                    normalizeDate(
+                        getSubmissionDate(item)
+                    );
+
+
+                return (
+                    status === "approved" &&
+                    date.startsWith(
+                        selectedMonth
+                    )
+                );
+
+            })
+            .forEach(item => {
+
+                const smc =
+                    String(
+                        getSMC(item)
+                    );
+
+
+                const key =
+                    smc;
+
+
+                if (
+                    !map.has(key)
+                ) {
+
+                    map.set(
+                        key,
+                        {
+                            staff_name:
+                                getStaffName(item),
+
+                            sales_man_code:
+                                getSMC(item),
+
+                            outlet:
+                                getOutlet(item),
+
+                            individual:
+                                0,
+
+                            bundle:
+                                0,
+
+                            total:
+                                0
+                        }
+                    );
+
+                }
+
+
+                const row =
+                    map.get(key);
+
+
+                const amount =
+                    getAmount(item);
+
+
+                if (
+                    getType(item) ===
+                    "bundle"
+                ) {
+
+                    row.bundle +=
+                        amount;
+
+                } else {
+
+                    row.individual +=
+                        amount;
+
+                }
+
+
+                row.total =
+                    row.individual +
+                    row.bundle;
+
+            });
+
+
+        return Array.from(
+            map.values()
+        )
+        .sort(
+            (a, b) =>
+                String(
+                    a.staff_name
+                ).localeCompare(
+                    String(
+                        b.staff_name
+                    )
+                )
+        );
+
+    }
+
+
+    /* =========================================================
+       RENDER MONTHLY SUMMARY
+    ========================================================== */
+
+    function renderMonthlySummary(
+        rows
+    ) {
+
+        const body =
+            document.getElementById(
+                "monthlySummaryBody"
+            );
+
+
+        if (
+            !rows ||
+            !rows.length
+        ) {
+
+            body.innerHTML = `
+
+                <tr>
+
+                    <td
+                        colspan="6"
+                        class="empty-row">
+
+                        No approved incentives for this month.
+
+                    </td>
+
+                </tr>
+
+            `;
+
+
+            document.getElementById(
+                "monthlyGrandTotal"
+            ).textContent =
+                "$0.00";
+
+
+            return;
+
+        }
+
+
+        let grandTotal = 0;
+
+
+        body.innerHTML =
+            rows.map(row => {
+
+                const individual =
+                    Number(
+                        getValue(
+                            row,
+                            [
+                                "individual",
+                                "individual_total"
+                            ],
+                            0
+                        )
+                    );
+
+
+                const bundle =
+                    Number(
+                        getValue(
+                            row,
+                            [
+                                "bundle",
+                                "bundle_total"
+                            ],
+                            0
+                        )
+                    );
+
+
+                let total =
+                    Number(
+                        getValue(
+                            row,
+                            [
+                                "total",
+                                "total_amount",
+                                "grand_total"
+                            ],
+                            individual +
+                            bundle
+                        )
+                    );
+
+
+                if (
+                    !Number.isFinite(total)
+                ) {
+
+                    total =
+                        individual +
+                        bundle;
+
+                }
+
+
+                grandTotal +=
+                    total;
+
+
+                return `
+
+                    <tr>
+
+                        <td>
+                            ${escapeHtml(
+                                getValue(
+                                    row,
+                                    [
+                                        "staff_name",
+                                        "name"
+                                    ],
+                                    "-"
+                                )
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                getValue(
+                                    row,
+                                    [
+                                        "sales_man_code",
+                                        "SMC",
+                                        "smc"
+                                    ],
+                                    "-"
+                                )
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                getValue(
+                                    row,
+                                    [
+                                        "outlet",
+                                        "outlet_name"
+                                    ],
+                                    "-"
+                                )
+                            )}
+                        </td>
+
+                        <td>
+                            ${money(individual)}
+                        </td>
+
+                        <td>
+                            ${money(bundle)}
+                        </td>
+
+                        <td>
+                            <strong>
+                                ${money(total)}
+                            </strong>
+                        </td>
+
+                    </tr>
+
+                `;
+
+            }).join("");
+
+
+        document.getElementById(
+            "monthlyGrandTotal"
+        ).textContent =
+            money(grandTotal);
+
+    }
+
+
+    /* =========================================================
+       TOP 3
+    ========================================================== */
+
+    async function loadTop3() {
+
+        const month =
+            document.getElementById(
+                "top3Month"
+            ).value;
+
+
+        if (!month) {
+
+            document.getElementById(
+                "top3Body"
+            ).innerHTML = `
+
+                <tr>
+
+                    <td
+                        colspan="5"
+                        class="loading">
+
+                        Select a month.
+
+                    </td>
+
+                </tr>
+
+            `;
+
+            return;
+
+        }
+
+
+        try {
+
+            const result =
+                await apiRequest(
+                    "top3",
+                    {
+                        month:
+                            month
+                    }
+                );
+
+
+            let rows =
+                Array.isArray(
+                    result.data
+                )
+                    ? result.data
+                    : [];
+
+
+            if (
+                rows.length &&
+                (
+                    rows[0].incentive_id !== undefined ||
+                    rows[0].submission_id !== undefined
+                )
+            ) {
+
+                rows =
+                    buildTop3(
+                        rows,
+                        month
+                    );
+
+            }
+
+
+            if (!rows.length) {
+
+                rows =
+                    buildTop3(
+                        adminData.submissions,
+                        month
+                    );
+
+            }
+
+
+            renderTop3(
+                rows
+            );
+
+
+        } catch (error) {
+
+            console.error(error);
+
+
+            const rows =
+                buildTop3(
+                    adminData.submissions,
+                    month
+                );
+
+
+            renderTop3(
+                rows
+            );
+
+        }
+
+    }
+
+
+    /* =========================================================
+       BUILD TOP 3
+    ========================================================== */
+
+    function buildTop3(
+        submissions,
+        selectedMonth
+    ) {
+
+        const map =
+            new Map();
+
+
+        submissions
+            .filter(item => {
+
+                return (
+                    getStatus(item) ===
+                    "approved" &&
+
+                    normalizeDate(
+                        getSubmissionDate(item)
+                    )
+                    .startsWith(
+                        selectedMonth
+                    )
+                );
+
+            })
+            .forEach(item => {
+
+                const smc =
+                    String(
+                        getSMC(item)
+                    );
+
+
+                if (
+                    !map.has(smc)
+                ) {
+
+                    map.set(
+                        smc,
+                        {
+                            staff_name:
+                                getStaffName(item),
+
+                            sales_man_code:
+                                getSMC(item),
+
+                            outlet:
+                                getOutlet(item),
+
+                            total:
+                                0
+                        }
+                    );
+
+                }
+
+
+                map.get(
+                    smc
+                ).total +=
+                    getAmount(item);
+
+            });
+
+
+        return Array.from(
+            map.values()
+        )
+        .sort(
+            (a, b) =>
+                Number(b.total) -
+                Number(a.total)
+        )
+        .slice(0, 3);
+
+    }
+
+
+    /* =========================================================
+       RENDER TOP 3
+    ========================================================== */
+
+    function renderTop3(
+        rows
+    ) {
+
+        const body =
+            document.getElementById(
+                "top3Body"
+            );
+
+
+        if (
+            !rows ||
+            !rows.length
+        ) {
+
+            body.innerHTML = `
+
+                <tr>
+
+                    <td
+                        colspan="5"
+                        class="empty-row">
+
+                        No approved incentives for this month.
+
+                    </td>
+
+                </tr>
+
+            `;
+
+            return;
+
+        }
+
+
+        body.innerHTML =
+            rows.map(
+                (row, index) => {
+
+                    return `
+
+                        <tr>
+
+                            <td>
+                                <strong>
+                                    ${index + 1}
+                                </strong>
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    getValue(
+                                        row,
+                                        [
+                                            "staff_name",
+                                            "name"
+                                        ],
+                                        "-"
+                                    )
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    getValue(
+                                        row,
+                                        [
+                                            "sales_man_code",
+                                            "SMC",
+                                            "smc"
+                                        ],
+                                        "-"
+                                    )
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    getValue(
+                                        row,
+                                        [
+                                            "outlet",
+                                            "outlet_name"
+                                        ],
+                                        "-"
+                                    )
+                                )}
+                            </td>
+
+                            <td>
+                                <strong>
+                                    ${money(
+                                        getValue(
+                                            row,
+                                            [
+                                                "total",
+                                                "total_amount",
+                                                "grand_total"
+                                            ],
+                                            0
+                                        )
+                                    )}
+                                </strong>
+                            </td>
+
+                        </tr>
+
+                    `;
+
+                }
+            )
+            .join("");
+
+    }
+
+
+    /* =========================================================
+       MODALS
+    ========================================================== */
+
+    function closeModal(
+        modalId
+    ) {
+
+        const modal =
+            document.getElementById(
+                modalId
+            );
+
+
+        if (modal) {
+
+            modal.classList.remove(
+                "show"
+            );
+
+        }
+
+    }
+
+
+    function outsideModal(
+        event,
+        modalId
+    ) {
+
+        if (
+            event.target.id ===
+            modalId
+        ) {
+
+            closeModal(
+                modalId
+            );
+
+        }
+
+    }
+
+
+    /* =========================================================
+       LOGOUT
+    ========================================================== */
+
+    async function logout() {
+
+        try {
+
+            await apiRequest(
+                "logout",
+                {}
+            );
+
+        } catch (error) {
+
+            console.error(error);
+
+        }
+
+
+        window.location.href =
+            "index.html";
+
+    }
+
+
+    /* =========================================================
+       INITIAL LOAD
+    ========================================================== */
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        async function () {
+
+            await loadAdminData();
+
+        }
+    );
+
+
+</script>
+
+</body>
+</html>
