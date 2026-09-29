@@ -1,0 +1,2818 @@
+<script>
+/* ============================================================
+   GLOBAL STATE
+============================================================ */
+
+const state = {
+    admin: {},
+    dashboard: {},
+    submissions: [],
+    promotions: [],
+    users: [],
+    monthlySummary: [],
+    top3: [],
+    currentSubmissionId: null,
+    currentPromotionId: null
+};
+
+
+/* ============================================================
+   BASIC HELPERS
+============================================================ */
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function money(value) {
+    const n = Number(value);
+    return `S$${(Number.isFinite(n) ? n : 0).toFixed(2)}`;
+}
+
+function getDateOnly(value) {
+    const s = String(value || "").trim();
+
+    if (!s) {
+        return "";
+    }
+
+    const match = s.match(/^(\d{4}-\d{2}-\d{2})/);
+
+    return match ? match[1] : "";
+}
+
+function todayString() {
+    const d = new Date();
+
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+
+    return `${y}-${m}-${day}`;
+}
+
+
+/* ============================================================
+   ID HELPERS
+============================================================ */
+
+function getSubmissionId(x) {
+    const raw =
+        x?.incentive_id ??
+        x?.submission_id ??
+        x?.id ??
+        x?.incentiveId;
+
+    if (
+        raw === null ||
+        raw === undefined ||
+        String(raw).trim() === ""
+    ) {
+        return null;
+    }
+
+    const n = Number(raw);
+
+    return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+
+function getPromoId(x) {
+    const raw =
+        x?.promo_id ??
+        x?.promotion_id ??
+        x?.promoId;
+
+    if (
+        raw === null ||
+        raw === undefined ||
+        String(raw).trim() === ""
+    ) {
+        return null;
+    }
+
+    const n = Number(raw);
+
+    return Number.isFinite(n) ? n : null;
+}
+
+
+/* ============================================================
+   FIELD HELPERS
+============================================================ */
+
+function getStaff(x) {
+    return String(
+        x?.staff_name ??
+        x?.name ??
+        ""
+    );
+}
+
+function getSMC(x) {
+    return String(
+        x?.sales_man_code ??
+        x?.SMC ??
+        x?.smc ??
+        ""
+    );
+}
+
+function getOutlet(x) {
+    return String(
+        x?.outlet ??
+        x?.outlet_name ??
+        ""
+    );
+}
+
+function getPromo(x) {
+    return String(
+        x?.promo ??
+        x?.promotion ??
+        x?.promo_name ??
+        x?.promotion_name ??
+        ""
+    );
+}
+
+function getQty(x) {
+    const n = Number(
+        x?.quantity ??
+        x?.qty ??
+        0
+    );
+
+    return Number.isFinite(n) ? n : 0;
+}
+
+function getRate(x) {
+    const n = Number(
+        x?.Rate ??
+        x?.rate ??
+        x?.incentive_rate ??
+        x?.promo_rate ??
+        0
+    );
+
+    return Number.isFinite(n) ? n : 0;
+}
+
+function getStatus(x) {
+    return String(
+        x?.status ??
+        x?.submission_status ??
+        ""
+    ).trim();
+}
+
+function getDate(x) {
+    return String(
+        x?.submission_date ??
+        x?.submitted_at ??
+        x?.created_at ??
+        x?.date ??
+        ""
+    );
+}
+
+function getStartDate(x) {
+    return String(
+        x?.start_date ??
+        x?.startDate ??
+        ""
+    );
+}
+
+function getEndDate(x) {
+    return String(
+        x?.end_date ??
+        x?.endDate ??
+        ""
+    );
+}
+
+
+/* ============================================================
+   IMPORTANT:
+   RESOLVE BUNDLE / INDIVIDUAL FROM PROMOTION
+============================================================ */
+
+function getType(x) {
+
+    /*
+     * First check whether the row itself has a type.
+     */
+
+    const direct = String(
+        x?.type ??
+        x?.promotion_type ??
+        x?.promo_type ??
+        x?.promotionType ??
+        ""
+    ).trim();
+
+    /*
+     * If this is a submission, use promo_id to find the
+     * original promotion.
+     *
+     * This is what prevents Bundle from being treated
+     * as Individual.
+     */
+
+    const promoId = getPromoId(x);
+
+    if (promoId !== null) {
+
+        const promo = state.promotions.find(
+            p => getPromoId(p) === promoId
+        );
+
+        if (promo) {
+
+            const promoType = String(
+                promo?.type ??
+                promo?.promotion_type ??
+                promo?.promo_type ??
+                promo?.promotionType ??
+                ""
+            ).trim();
+
+            if (promoType) {
+                return promoType;
+            }
+        }
+    }
+
+    /*
+     * Only use the direct type if promotion lookup did not
+     * give us anything.
+     */
+
+    if (direct) {
+        return direct;
+    }
+
+    return "";
+}
+
+
+function isBundle(x) {
+
+    const type = getType(x)
+        .toLowerCase()
+        .replace(/[\s_-]/g, "");
+
+    return type === "bundle";
+}
+
+
+function displayType(x) {
+
+    if (isBundle(x)) {
+        return "Bundle";
+    }
+
+    const type = getType(x);
+
+    if (type) {
+        return type;
+    }
+
+    return "Individual";
+}
+
+
+/* ============================================================
+   PROMOTION STATUS
+============================================================ */
+
+function getPromotionStatus(p) {
+
+    const direct = String(
+        p?.status ??
+        p?.promotion_status ??
+        p?.promo_status ??
+        ""
+    ).trim();
+
+    if (direct) {
+
+        const n = direct.toLowerCase();
+
+        if (n === "active") {
+            return "Active";
+        }
+
+        if (n === "upcoming") {
+            return "Upcoming";
+        }
+
+        if (
+            n === "expired" ||
+            n === "inactive"
+        ) {
+            return "Expired";
+        }
+    }
+
+    const start = getDateOnly(getStartDate(p));
+    const end = getDateOnly(getEndDate(p));
+    const today = todayString();
+
+    if (start && today < start) {
+        return "Upcoming";
+    }
+
+    if (end && today > end) {
+        return "Expired";
+    }
+
+    return "Active";
+}
+
+
+function statusClass(status) {
+
+    const s = String(status)
+        .toLowerCase()
+        .replace(/\s+/g, "-");
+
+    if (
+        s === "approved" ||
+        s === "active"
+    ) {
+        return "status status-approved";
+    }
+
+    if (
+        s === "pending" ||
+        s === "upcoming"
+    ) {
+        return "status status-pending";
+    }
+
+    if (
+        s === "rejected" ||
+        s === "expired"
+    ) {
+        return "status status-rejected";
+    }
+
+    return "status status-default";
+}
+
+
+/* ============================================================
+   API
+============================================================ */
+
+async function apiRequest(action, data = {}) {
+
+    const response = await fetch(
+        `admin.php?action=${encodeURIComponent(action)}`,
+        {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify(data)
+        }
+    );
+
+    const text = await response.text();
+
+    let json;
+
+    try {
+        json = text ? JSON.parse(text) : {};
+    } catch (e) {
+        throw new Error(
+            text ||
+            `Server returned HTTP ${response.status}`
+        );
+    }
+
+    if (
+        !response.ok ||
+        json.success === false
+    ) {
+        throw new Error(
+            json.message ||
+            json.error ||
+            `Request failed (${response.status})`
+        );
+    }
+
+    return json;
+}
+
+
+/* ============================================================
+   MESSAGE
+============================================================ */
+
+function showMessage(message, type = "info") {
+
+    const el = document.getElementById("message");
+
+    if (!el) {
+        alert(message);
+        return;
+    }
+
+    el.textContent = message;
+    el.className = `message show ${type}`;
+
+    clearTimeout(window.messageTimer);
+
+    window.messageTimer = setTimeout(() => {
+        el.classList.remove("show");
+    }, 3500);
+}
+
+
+/* ============================================================
+   MODAL
+============================================================ */
+
+function openModal(id) {
+
+    const el = document.getElementById(id);
+
+    if (el) {
+        el.classList.add("show");
+    }
+}
+
+function closeModal(id) {
+
+    const el = document.getElementById(id);
+
+    if (el) {
+        el.classList.remove("show");
+    }
+}
+
+
+/* ============================================================
+   PROMOTION EDIT
+============================================================ */
+
+function openEditPromotion(id) {
+
+    const numericId = Number(id);
+
+    if (
+        !Number.isFinite(numericId) ||
+        numericId <= 0
+    ) {
+        showMessage(
+            "Invalid promotion ID.",
+            "error"
+        );
+        return;
+    }
+
+    const promotion = state.promotions.find(
+        p => getPromoId(p) === numericId
+    );
+
+    if (!promotion) {
+        showMessage(
+            "Promotion not found.",
+            "error"
+        );
+        return;
+    }
+
+    document.getElementById(
+        "editPromotionId"
+    ).value = String(numericId);
+
+    document.getElementById(
+        "editPromotionName"
+    ).value = getPromo(promotion);
+
+    document.getElementById(
+        "editPromotionRate"
+    ).value = getRate(promotion);
+
+    const type = displayType(promotion);
+
+    document.getElementById(
+        "editPromotionType"
+    ).value = type;
+
+    document.getElementById(
+        "editPromotionStartDate"
+    ).value = getDateOnly(
+        getStartDate(promotion)
+    );
+
+    document.getElementById(
+        "editPromotionEndDate"
+    ).value = getDateOnly(
+        getEndDate(promotion)
+    );
+
+    /*
+     * Bundle items
+     */
+
+    document.getElementById("editBundleItem1").value =
+        String(promotion?.item_1 ?? "");
+
+    document.getElementById("editBundleItem2").value =
+        String(promotion?.item_2 ?? "");
+
+    document.getElementById("editBundleItem3").value =
+        String(promotion?.item_3 ?? "");
+
+    document.getElementById("editBundleItem4").value =
+        String(promotion?.item_4 ?? "");
+
+    document.getElementById("editBundleItem5").value =
+        String(promotion?.item_5 ?? "");
+
+    toggleEditBundleFields();
+
+    openModal("editPromotionModal");
+}
+
+
+/* ============================================================
+   SHOW / HIDE BUNDLE FIELDS
+============================================================ */
+
+function toggleEditBundleFields() {
+
+    const type = String(
+        document.getElementById(
+            "editPromotionType"
+        )?.value || ""
+    ).toLowerCase();
+
+    const bundleFields =
+        document.getElementById(
+            "editBundleFields"
+        );
+
+    if (!bundleFields) {
+        return;
+    }
+
+    if (type === "bundle") {
+
+        bundleFields.classList.remove(
+            "hidden"
+        );
+
+    } else {
+
+        bundleFields.classList.add(
+            "hidden"
+        );
+    }
+}
+
+
+/* ============================================================
+   SAVE EDITED PROMOTION
+============================================================ */
+
+async function saveEditPromotion() {
+
+    const id = Number(
+        document.getElementById(
+            "editPromotionId"
+        ).value
+    );
+
+    if (
+        !Number.isFinite(id) ||
+        id <= 0
+    ) {
+        showMessage(
+            "Invalid promotion ID.",
+            "error"
+        );
+        return;
+    }
+
+    const promo =
+        document.getElementById(
+            "editPromotionName"
+        ).value.trim();
+
+    const rate = Number(
+        document.getElementById(
+            "editPromotionRate"
+        ).value
+    );
+
+    const type =
+        document.getElementById(
+            "editPromotionType"
+        ).value;
+
+    const startDate =
+        document.getElementById(
+            "editPromotionStartDate"
+        ).value;
+
+    const endDate =
+        document.getElementById(
+            "editPromotionEndDate"
+        ).value;
+
+    if (!promo) {
+
+        showMessage(
+            "Promotion name is required.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (
+        !Number.isFinite(rate) ||
+        rate < 0
+    ) {
+
+        showMessage(
+            "Please enter a valid rate.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (
+        startDate &&
+        endDate &&
+        startDate > endDate
+    ) {
+
+        showMessage(
+            "End date cannot be before start date.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    /*
+     * Bundle validation
+     */
+
+    const item1 =
+        document.getElementById(
+            "editBundleItem1"
+        ).value.trim();
+
+    const item2 =
+        document.getElementById(
+            "editBundleItem2"
+        ).value.trim();
+
+    const item3 =
+        document.getElementById(
+            "editBundleItem3"
+        ).value.trim();
+
+    const item4 =
+        document.getElementById(
+            "editBundleItem4"
+        ).value.trim();
+
+    const item5 =
+        document.getElementById(
+            "editBundleItem5"
+        ).value.trim();
+
+
+    if (
+        type.toLowerCase() === "bundle" &&
+        !item1
+    ) {
+
+        showMessage(
+            "Item 1 is required for a bundle.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    /*
+     * IMPORTANT:
+     * Send BOTH promo_id and promotion_id.
+     *
+     * This makes the frontend compatible with the PHP
+     * even if the backend uses either naming convention.
+     */
+
+    const payload = {
+        promo_id: id,
+        promotion_id: id,
+
+        promo: promo,
+        Rate: rate,
+        rate: rate,
+
+        type: type,
+
+        start_date: startDate || null,
+        end_date: endDate || null,
+
+        item_1: type.toLowerCase() === "bundle"
+            ? item1
+            : "",
+
+        item_2: type.toLowerCase() === "bundle"
+            ? item2
+            : "",
+
+        item_3: type.toLowerCase() === "bundle"
+            ? item3
+            : "",
+
+        item_4: type.toLowerCase() === "bundle"
+            ? item4
+            : "",
+
+        item_5: type.toLowerCase() === "bundle"
+            ? item5
+            : ""
+    };
+
+
+    const saveButton =
+        document.querySelector(
+            "#editPromotionForm button[type='submit']"
+        );
+
+    if (saveButton) {
+        saveButton.disabled = true;
+        saveButton.textContent = "Saving...";
+    }
+
+
+    try {
+
+        /*
+         * THIS WAS THE MISSING ACTION.
+         */
+
+        await apiRequest(
+            "update_promotion",
+            payload
+        );
+
+        showMessage(
+            "Promotion updated successfully.",
+            "success"
+        );
+
+        closeModal(
+            "editPromotionModal"
+        );
+
+        /*
+         * Refresh everything.
+         *
+         * This is important because if the promotion was changed
+         * from Individual -> Bundle, Dashboard / Submissions /
+         * Monthly Summary / Top 3 must all use the new type.
+         */
+
+        await refreshAdminData();
+
+    } catch (error) {
+
+        showMessage(
+            error.message ||
+            "Failed to update promotion.",
+            "error"
+        );
+
+    } finally {
+
+        if (saveButton) {
+            saveButton.disabled = false;
+            saveButton.textContent = "Save Changes";
+        }
+    }
+}
+
+
+/* ============================================================
+   DELETE PROMOTION
+============================================================ */
+
+async function deletePromotion(id) {
+
+    const numericId = Number(id);
+
+    if (
+        !Number.isFinite(numericId) ||
+        numericId <= 0
+    ) {
+        showMessage(
+            "Invalid promotion ID.",
+            "error"
+        );
+        return;
+    }
+
+    const promotion =
+        state.promotions.find(
+            p => getPromoId(p) === numericId
+        );
+
+    const name = promotion
+        ? getPromo(promotion)
+        : "this promotion";
+
+    if (
+        !confirm(
+            `Delete "${name}"?`
+        )
+    ) {
+        return;
+    }
+
+    try {
+
+        await apiRequest(
+            "delete_promotion",
+            {
+                promo_id: numericId,
+                promotion_id: numericId
+            }
+        );
+
+        showMessage(
+            "Promotion deleted.",
+            "success"
+        );
+
+        await refreshAdminData();
+
+    } catch (error) {
+
+        showMessage(
+            error.message ||
+            "Failed to delete promotion.",
+            "error"
+        );
+    }
+}
+
+
+/* ============================================================
+   PROMOTION TABLE
+============================================================ */
+
+function renderPromotions() {
+
+    const tbody =
+        document.getElementById(
+            "promotionsTableBody"
+        );
+
+    if (!tbody) {
+        return;
+    }
+
+    if (!state.promotions.length) {
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="9" class="empty">
+                    No promotions found.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+
+    tbody.innerHTML =
+        state.promotions.map(promotion => {
+
+            const id =
+                getPromoId(promotion);
+
+            const type =
+                displayType(promotion);
+
+            const status =
+                getPromotionStatus(promotion);
+
+            const start =
+                getDateOnly(
+                    getStartDate(promotion)
+                );
+
+            const end =
+                getDateOnly(
+                    getEndDate(promotion)
+                );
+
+
+            let bundleItems = "-";
+
+            if (isBundle(promotion)) {
+
+                const items = [
+                    promotion.item_1,
+                    promotion.item_2,
+                    promotion.item_3,
+                    promotion.item_4,
+                    promotion.item_5
+                ]
+                .map(x => String(x || "").trim())
+                .filter(Boolean);
+
+                if (items.length) {
+
+                    bundleItems = `
+                        <div class="item-tags">
+                            ${items.map(item => `
+                                <span class="item-tag">
+                                    ${escapeHtml(item)}
+                                </span>
+                            `).join("")}
+                        </div>
+                    `;
+                }
+            }
+
+
+            const actions =
+                id !== null
+                    ? `
+                        <div class="button-row">
+
+                            <button
+                                type="button"
+                                class="btn btn-primary btn-small promo-edit-btn"
+                                data-id="${id}">
+                                Edit
+                            </button>
+
+                            <button
+                                type="button"
+                                class="btn btn-danger btn-small promo-delete-btn"
+                                data-id="${id}">
+                                Delete
+                            </button>
+
+                        </div>
+                    `
+                    : `
+                        <span class="status status-rejected">
+                            Invalid ID
+                        </span>
+                    `;
+
+
+            return `
+                <tr>
+
+                    <td>${id ?? "-"}</td>
+
+                    <td>
+                        ${escapeHtml(
+                            getPromo(promotion)
+                        )}
+                    </td>
+
+                    <td>
+                        <span class="
+                            type-badge
+                            ${isBundle(promotion)
+                                ? "type-bundle"
+                                : ""}
+                        ">
+                            ${escapeHtml(type)}
+                        </span>
+                    </td>
+
+                    <td class="money">
+                        ${money(
+                            getRate(promotion)
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(start || "-")}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(end || "-")}
+                    </td>
+
+                    <td>
+                        <span class="${statusClass(status)}">
+                            ${escapeHtml(status)}
+                        </span>
+                    </td>
+
+                    <td>
+                        ${bundleItems}
+                    </td>
+
+                    <td>
+                        ${actions}
+                    </td>
+
+                </tr>
+            `;
+
+        }).join("");
+}
+
+
+/* ============================================================
+   PROMOTION BUTTON EVENTS
+   IMPORTANT:
+   USE EVENT DELEGATION
+============================================================ */
+
+document.addEventListener(
+    "click",
+    function(e) {
+
+        const editButton =
+            e.target.closest(
+                ".promo-edit-btn"
+            );
+
+        if (editButton) {
+
+            const id =
+                Number(
+                    editButton.dataset.id
+                );
+
+            if (
+                !Number.isFinite(id) ||
+                id <= 0
+            ) {
+
+                showMessage(
+                    "Invalid promotion ID.",
+                    "error"
+                );
+
+                return;
+            }
+
+            openEditPromotion(id);
+
+            return;
+        }
+
+
+        const deleteButton =
+            e.target.closest(
+                ".promo-delete-btn"
+            );
+
+        if (deleteButton) {
+
+            const id =
+                Number(
+                    deleteButton.dataset.id
+                );
+
+            if (
+                !Number.isFinite(id) ||
+                id <= 0
+            ) {
+
+                showMessage(
+                    "Invalid promotion ID.",
+                    "error"
+                );
+
+                return;
+            }
+
+            deletePromotion(id);
+        }
+    }
+);
+
+
+/* ============================================================
+   EDIT PROMOTION FORM SUBMIT
+   THIS FIXES "SAVE CHANGES DOES NOTHING"
+============================================================ */
+
+document.addEventListener(
+    "submit",
+    function(e) {
+
+        if (
+            e.target.id !==
+            "editPromotionForm"
+        ) {
+            return;
+        }
+
+        e.preventDefault();
+
+        saveEditPromotion();
+    }
+);
+
+
+/* ============================================================
+   BUNDLE TYPE CHANGE
+============================================================ */
+
+document.addEventListener(
+    "change",
+    function(e) {
+
+        if (
+            e.target.id ===
+            "editPromotionType"
+        ) {
+            toggleEditBundleFields();
+        }
+    }
+);
+
+
+/* ============================================================
+   DASHBOARD CALCULATION
+============================================================ */
+
+function calculateApprovedTotals() {
+
+    let individual = 0;
+    let bundle = 0;
+
+    let pending = 0;
+    let approved = 0;
+    let rejected = 0;
+
+
+    for (
+        const submission
+        of state.submissions
+    ) {
+
+        const status =
+            getStatus(submission)
+                .toLowerCase();
+
+        const amount =
+            getQty(submission) *
+            getRate(submission);
+
+
+        if (status === "approved") {
+
+            approved++;
+
+            if (
+                isBundle(submission)
+            ) {
+
+                bundle += amount;
+
+            } else {
+
+                individual += amount;
+            }
+
+        } else if (
+            status === "pending"
+        ) {
+
+            pending++;
+
+        } else if (
+            status === "rejected"
+        ) {
+
+            rejected++;
+        }
+    }
+
+
+    return {
+        individual,
+        bundle,
+        total: individual + bundle,
+        pending,
+        approved,
+        rejected
+    };
+}
+
+
+/* ============================================================
+   SUBMISSIONS TABLE
+============================================================ */
+
+function renderSubmissions() {
+
+    const tbody =
+        document.getElementById(
+            "submissionsTableBody"
+        );
+
+    if (!tbody) {
+        return;
+    }
+
+    if (!state.submissions.length) {
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="12" class="empty">
+                    No submissions found.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+
+    tbody.innerHTML =
+        state.submissions.map(row => {
+
+            const id =
+                getSubmissionId(row);
+
+            const type =
+                displayType(row);
+
+            const qty =
+                getQty(row);
+
+            const rate =
+                getRate(row);
+
+            const amount =
+                qty * rate;
+
+            const status =
+                getStatus(row);
+
+
+            const action =
+                id !== null
+                    ? `
+                        <button
+                            type="button"
+                            class="btn btn-primary btn-small view-btn"
+                            data-id="${id}">
+                            View
+                        </button>
+                    `
+                    : `
+                        <span class="
+                            status
+                            status-rejected
+                        ">
+                            Invalid ID
+                        </span>
+                    `;
+
+
+            return `
+                <tr>
+
+                    <td>
+                        ${id ?? "-"}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(
+                            getStaff(row)
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(
+                            getSMC(row)
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(
+                            getOutlet(row)
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(
+                            getPromo(row)
+                        )}
+                    </td>
+
+                    <td>
+                        <span class="
+                            type-badge
+                            ${isBundle(row)
+                                ? "type-bundle"
+                                : ""}
+                        ">
+                            ${escapeHtml(type)}
+                        </span>
+                    </td>
+
+                    <td>
+                        ${qty}
+                    </td>
+
+                    <td class="money">
+                        ${money(rate)}
+                    </td>
+
+                    <td class="money">
+                        ${money(amount)}
+                    </td>
+
+                    <td>
+                        <span class="${statusClass(status)}">
+                            ${escapeHtml(status)}
+                        </span>
+                    </td>
+
+                    <td>
+                        ${escapeHtml(
+                            getDateOnly(
+                                getDate(row)
+                            ) ||
+                            getDate(row) ||
+                            "-"
+                        )}
+                    </td>
+
+                    <td class="action-column">
+                        ${action}
+                    </td>
+
+                </tr>
+            `;
+
+        }).join("");
+}
+
+
+/* ============================================================
+   SUBMISSION VIEW BUTTON
+============================================================ */
+
+document.addEventListener(
+    "click",
+    function(e) {
+
+        const button =
+            e.target.closest(
+                ".view-btn"
+            );
+
+        if (!button) {
+            return;
+        }
+
+        const id =
+            Number(
+                button.dataset.id
+            );
+
+        if (
+            !Number.isFinite(id) ||
+            id <= 0
+        ) {
+
+            showMessage(
+                "Invalid submission ID.",
+                "error"
+            );
+
+            return;
+        }
+
+        showSubmission(id);
+    }
+);
+
+
+/* ============================================================
+   VIEW SUBMISSION
+============================================================ */
+
+async function showSubmission(id) {
+
+    const numericId = Number(id);
+
+    if (
+        !Number.isFinite(numericId) ||
+        numericId <= 0
+    ) {
+
+        showMessage(
+            "Invalid submission ID.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    state.currentSubmissionId =
+        numericId;
+
+
+    /*
+     * First use the local row.
+     * This also means the Bundle type is resolved correctly.
+     */
+
+    let submission =
+        state.submissions.find(
+            x =>
+                getSubmissionId(x) ===
+                numericId
+        );
+
+
+    /*
+     * If local row is unavailable, ask PHP.
+     */
+
+    if (!submission) {
+
+        try {
+
+            const response =
+                await apiRequest(
+                    "get_submission",
+                    {
+                        incentive_id:
+                            numericId,
+
+                        submission_id:
+                            numericId
+                    }
+                );
+
+            const data =
+                response.data ||
+                response.submission ||
+                response;
+
+            submission =
+                data.submission ||
+                data;
+
+        } catch (error) {
+
+            showMessage(
+                error.message ||
+                "Failed to load submission.",
+                "error"
+            );
+
+            return;
+        }
+    }
+
+
+    const idValue =
+        getSubmissionId(submission);
+
+    const amount =
+        getQty(submission) *
+        getRate(submission);
+
+    const type =
+        displayType(submission);
+
+
+    const details =
+        document.getElementById(
+            "submissionDetails"
+        );
+
+    if (details) {
+
+        details.innerHTML = `
+
+            <div class="detail-grid">
+
+                <div class="detail-box">
+                    <div class="detail-label">
+                        Submission ID
+                    </div>
+                    <div class="detail-value">
+                        ${idValue ?? "-"}
+                    </div>
+                </div>
+
+                <div class="detail-box">
+                    <div class="detail-label">
+                        Staff
+                    </div>
+                    <div class="detail-value">
+                        ${escapeHtml(
+                            getStaff(submission)
+                        )}
+                    </div>
+                </div>
+
+                <div class="detail-box">
+                    <div class="detail-label">
+                        SMC
+                    </div>
+                    <div class="detail-value">
+                        ${escapeHtml(
+                            getSMC(submission)
+                        )}
+                    </div>
+                </div>
+
+                <div class="detail-box">
+                    <div class="detail-label">
+                        Outlet
+                    </div>
+                    <div class="detail-value">
+                        ${escapeHtml(
+                            getOutlet(submission)
+                        )}
+                    </div>
+                </div>
+
+                <div class="detail-box">
+                    <div class="detail-label">
+                        Promotion
+                    </div>
+                    <div class="detail-value">
+                        ${escapeHtml(
+                            getPromo(submission)
+                        )}
+                    </div>
+                </div>
+
+                <div class="detail-box">
+                    <div class="detail-label">
+                        Type
+                    </div>
+                    <div class="detail-value">
+                        <span class="
+                            type-badge
+                            ${isBundle(submission)
+                                ? "type-bundle"
+                                : ""}
+                        ">
+                            ${escapeHtml(type)}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="detail-box">
+                    <div class="detail-label">
+                        Quantity
+                    </div>
+                    <div class="detail-value">
+                        ${getQty(submission)}
+                    </div>
+                </div>
+
+                <div class="detail-box">
+                    <div class="detail-label">
+                        Rate
+                    </div>
+                    <div class="detail-value">
+                        ${money(
+                            getRate(submission)
+                        )}
+                    </div>
+                </div>
+
+                <div class="detail-box">
+                    <div class="detail-label">
+                        Amount
+                    </div>
+                    <div class="detail-value">
+                        ${money(amount)}
+                    </div>
+                </div>
+
+                <div class="detail-box">
+                    <div class="detail-label">
+                        Status
+                    </div>
+                    <div class="detail-value">
+                        <span class="${statusClass(
+                            getStatus(submission)
+                        )}">
+                            ${escapeHtml(
+                                getStatus(submission)
+                            )}
+                        </span>
+                    </div>
+                </div>
+
+            </div>
+
+        `;
+    }
+
+
+    /*
+     * Actions inside View modal
+     */
+
+    const actions =
+        document.getElementById(
+            "viewActions"
+        );
+
+    if (actions) {
+
+        const status =
+            getStatus(submission)
+                .toLowerCase();
+
+
+        let html = `
+
+            <button
+                type="button"
+                class="btn btn-primary"
+                onclick="openEditSubmission(${numericId})">
+                Edit
+            </button>
+
+            <button
+                type="button"
+                class="btn btn-danger"
+                onclick="deleteSubmission(${numericId})">
+                Delete
+            </button>
+        `;
+
+
+        if (status === "pending") {
+
+            html = `
+
+                <button
+                    type="button"
+                    class="btn btn-success"
+                    onclick="approveSubmission(${numericId})">
+                    Approve
+                </button>
+
+                <button
+                    type="button"
+                    class="btn btn-warning"
+                    onclick="rejectSubmission(${numericId})">
+                    Reject
+                </button>
+
+                ${html}
+            `;
+        }
+
+
+        actions.innerHTML = html;
+    }
+
+
+    openModal("viewModal");
+}
+
+
+/* ============================================================
+   APPROVE
+============================================================ */
+
+async function approveSubmission(id) {
+
+    const numericId = Number(id);
+
+    if (
+        !Number.isFinite(numericId) ||
+        numericId <= 0
+    ) {
+
+        showMessage(
+            "Invalid submission ID.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    try {
+
+        await apiRequest(
+            "approve",
+            {
+                incentive_id:
+                    numericId
+            }
+        );
+
+        showMessage(
+            "Submission approved.",
+            "success"
+        );
+
+        closeModal("viewModal");
+
+        await refreshAdminData();
+
+    } catch (error) {
+
+        showMessage(
+            error.message ||
+            "Failed to approve submission.",
+            "error"
+        );
+    }
+}
+
+
+/* ============================================================
+   REJECT
+============================================================ */
+
+async function rejectSubmission(id) {
+
+    const numericId = Number(id);
+
+    if (
+        !Number.isFinite(numericId) ||
+        numericId <= 0
+    ) {
+
+        showMessage(
+            "Invalid submission ID.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const current =
+        state.submissions.find(
+            x =>
+                getSubmissionId(x) ===
+                numericId
+        );
+
+
+    if (
+        current &&
+        getStatus(current)
+            .toLowerCase() !== "pending"
+    ) {
+
+        showMessage(
+            "Only pending submissions can be rejected.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const reason =
+        window.prompt(
+            "Enter rejection reason:"
+        );
+
+
+    if (reason === null) {
+        return;
+    }
+
+
+    const trimmed =
+        reason.trim();
+
+
+    if (!trimmed) {
+
+        showMessage(
+            "Rejection reason is required.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    try {
+
+        await apiRequest(
+            "reject",
+            {
+                incentive_id:
+                    numericId,
+
+                rejection_reason:
+                    trimmed,
+
+                reason:
+                    trimmed
+            }
+        );
+
+        showMessage(
+            "Submission rejected.",
+            "success"
+        );
+
+        closeModal("viewModal");
+
+        await refreshAdminData();
+
+    } catch (error) {
+
+        showMessage(
+            error.message ||
+            "Failed to reject submission.",
+            "error"
+        );
+    }
+}
+
+
+/* ============================================================
+   DELETE SUBMISSION
+============================================================ */
+
+async function deleteSubmission(id) {
+
+    const numericId = Number(id);
+
+    if (
+        !Number.isFinite(numericId) ||
+        numericId <= 0
+    ) {
+
+        showMessage(
+            "Invalid submission ID.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    if (
+        !confirm(
+            "Delete this submission?"
+        )
+    ) {
+        return;
+    }
+
+
+    try {
+
+        await apiRequest(
+            "delete_submission",
+            {
+                incentive_id:
+                    numericId
+            }
+        );
+
+        showMessage(
+            "Submission deleted.",
+            "success"
+        );
+
+        closeModal("viewModal");
+
+        await refreshAdminData();
+
+    } catch (error) {
+
+        showMessage(
+            error.message ||
+            "Failed to delete submission.",
+            "error"
+        );
+    }
+}
+
+
+/* ============================================================
+   REFRESH EVERYTHING
+============================================================ */
+
+let refreshInProgress = false;
+
+
+async function refreshAdminData() {
+
+    if (refreshInProgress) {
+        return;
+    }
+
+    refreshInProgress = true;
+
+
+    try {
+
+        await loadAdminData();
+
+        renderAll();
+
+
+        if (
+            state.currentSubmissionId !== null
+        ) {
+
+            const exists =
+                state.submissions.some(
+                    s =>
+                        getSubmissionId(s) ===
+                        state.currentSubmissionId
+                );
+
+
+            if (!exists) {
+
+                state.currentSubmissionId =
+                    null;
+
+                closeModal("viewModal");
+            }
+        }
+
+
+    } catch (error) {
+
+        showMessage(
+            error.message ||
+            "Failed to refresh data.",
+            "error"
+        );
+
+    } finally {
+
+        refreshInProgress = false;
+    }
+}
+
+
+/* ============================================================
+   LOAD ADMIN DATA
+============================================================ */
+
+async function loadAdminData() {
+
+    const response =
+        await apiRequest(
+            "bootstrap",
+            {}
+        );
+
+
+    const d =
+        response.data ||
+        response;
+
+
+    state.admin =
+        d.admin ||
+        {};
+
+    state.dashboard =
+        Array.isArray(d.dashboard)
+            ? {}
+            : (
+                d.dashboard ||
+                {}
+            );
+
+    state.submissions =
+        Array.isArray(
+            d.submissions
+        )
+            ? d.submissions
+            : [];
+
+    state.promotions =
+        Array.isArray(
+            d.promotions
+        )
+            ? d.promotions
+            : [];
+
+    state.users =
+        Array.isArray(
+            d.users
+        )
+            ? d.users
+            : [];
+
+    state.monthlySummary =
+        Array.isArray(
+            d.monthlySummary
+        )
+            ? d.monthlySummary
+            : [];
+
+    state.top3 =
+        Array.isArray(
+            d.top3
+        )
+            ? d.top3
+            : [];
+}
+
+
+/* ============================================================
+   RENDER ALL
+============================================================ */
+
+function renderAll() {
+
+    renderPromotions();
+
+    renderSubmissions();
+
+    renderDashboard();
+
+    renderUsers();
+
+    renderMonthlySummary();
+
+    renderTop3();
+
+    populateOutletFilter();
+}
+
+
+/* ============================================================
+   DASHBOARD
+============================================================ */
+
+function renderDashboard() {
+
+    const totals =
+        calculateApprovedTotals();
+
+
+    const totalStaff =
+        new Set(
+            state.users.map(
+                x => getSMC(x)
+            ).filter(Boolean)
+        ).size;
+
+
+    setText(
+        "totalIncentive",
+        money(totals.total)
+    );
+
+    setText(
+        "individualIncentive",
+        money(totals.individual)
+    );
+
+    setText(
+        "bundleIncentive",
+        money(totals.bundle)
+    );
+
+    setText(
+        "pendingCount",
+        totals.pending
+    );
+
+    setText(
+        "approvedCount",
+        totals.approved
+    );
+
+    setText(
+        "rejectedCount",
+        totals.rejected
+    );
+
+    setText(
+        "totalStaff",
+        totalStaff
+    );
+}
+
+
+function setText(id, value) {
+
+    const el =
+        document.getElementById(id);
+
+    if (el) {
+        el.textContent = value;
+    }
+}
+
+
+/* ============================================================
+   OUTLET FILTER
+============================================================ */
+
+function populateOutletFilter() {
+
+    const select =
+        document.getElementById(
+            "submissionOutletFilter"
+        );
+
+    if (!select) {
+        return;
+    }
+
+
+    const oldValue =
+        select.value;
+
+
+    const outlets =
+        [
+            ...new Set(
+                state.submissions
+                    .map(
+                        x => getOutlet(x).trim()
+                    )
+                    .filter(Boolean)
+            )
+        ]
+        .sort(
+            (a, b) =>
+                a.localeCompare(b)
+        );
+
+
+    select.innerHTML = `
+        <option value="">
+            All Outlets
+        </option>
+
+        ${outlets.map(outlet => `
+            <option value="${escapeHtml(outlet)}">
+                ${escapeHtml(outlet)}
+            </option>
+        `).join("")}
+    `;
+
+
+    if (
+        outlets.includes(oldValue)
+    ) {
+        select.value = oldValue;
+    }
+}
+
+
+/* ============================================================
+   FILTER SUBMISSIONS
+============================================================ */
+
+function getFilteredSubmissions() {
+
+    const search =
+        String(
+            document.getElementById(
+                "submissionSearch"
+            )?.value || ""
+        )
+        .trim()
+        .toLowerCase();
+
+
+    const outlet =
+        String(
+            document.getElementById(
+                "submissionOutletFilter"
+            )?.value || ""
+        )
+        .trim();
+
+
+    const status =
+        String(
+            document.getElementById(
+                "submissionStatusFilter"
+            )?.value || ""
+        )
+        .trim()
+        .toLowerCase();
+
+
+    return state.submissions.filter(
+        row => {
+
+            const matchesSearch =
+                !search ||
+                [
+                    getSubmissionId(row),
+                    getStaff(row),
+                    getSMC(row),
+                    getOutlet(row),
+                    getPromo(row),
+                    displayType(row)
+                ]
+                .join(" ")
+                .toLowerCase()
+                .includes(search);
+
+
+            const matchesOutlet =
+                !outlet ||
+                getOutlet(row).trim() ===
+                    outlet;
+
+
+            const matchesStatus =
+                !status ||
+                getStatus(row)
+                    .toLowerCase() ===
+                    status;
+
+
+            return (
+                matchesSearch &&
+                matchesOutlet &&
+                matchesStatus
+            );
+        }
+    );
+}
+
+
+/* ============================================================
+   MONTHLY SUMMARY
+============================================================ */
+
+function calculateMonthlySummary(
+    monthString
+) {
+
+    const rows =
+        state.submissions.filter(
+            row => {
+
+                if (
+                    getStatus(row)
+                        .toLowerCase() !==
+                    "approved"
+                ) {
+                    return false;
+                }
+
+                const date =
+                    getDateOnly(
+                        getDate(row)
+                    );
+
+                return date.startsWith(
+                    monthString
+                );
+            }
+        );
+
+
+    const staffMap = new Map();
+
+
+    let individual = 0;
+    let bundle = 0;
+
+
+    for (const row of rows) {
+
+        const smc =
+            getSMC(row) ||
+            "Unknown";
+
+        const staff =
+            getStaff(row) ||
+            smc;
+
+        const outlet =
+            getOutlet(row);
+
+        const amount =
+            getQty(row) *
+            getRate(row);
+
+
+        if (isBundle(row)) {
+            bundle += amount;
+        } else {
+            individual += amount;
+        }
+
+
+        if (!staffMap.has(smc)) {
+
+            staffMap.set(
+                smc,
+                {
+                    staff,
+                    smc,
+                    outlet,
+                    individual: 0,
+                    bundle: 0,
+                    total: 0
+                }
+            );
+        }
+
+
+        const item =
+            staffMap.get(smc);
+
+
+        if (isBundle(row)) {
+            item.bundle += amount;
+        } else {
+            item.individual += amount;
+        }
+
+        item.total += amount;
+    }
+
+
+    return {
+        individual,
+        bundle,
+        total:
+            individual +
+            bundle,
+        staff:
+            Array.from(
+                staffMap.values()
+            )
+    };
+}
+
+
+function renderMonthlySummary() {
+
+    const month =
+        document.getElementById(
+            "summaryMonth"
+        )?.value;
+
+
+    if (!month) {
+        return;
+    }
+
+
+    const summary =
+        calculateMonthlySummary(
+            month
+        );
+
+
+    setText(
+        "summaryIndividual",
+        money(summary.individual)
+    );
+
+    setText(
+        "summaryBundle",
+        money(summary.bundle)
+    );
+
+    setText(
+        "summaryTotal",
+        money(summary.total)
+    );
+
+
+    const tbody =
+        document.getElementById(
+            "monthlySummaryTableBody"
+        );
+
+
+    if (!tbody) {
+        return;
+    }
+
+
+    if (!summary.staff.length) {
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="empty">
+                    No approved incentives for this month.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+
+    tbody.innerHTML =
+        summary.staff
+            .sort(
+                (a, b) =>
+                    b.total -
+                    a.total
+            )
+            .map(item => `
+
+                <tr>
+
+                    <td>
+                        ${escapeHtml(
+                            item.staff
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(
+                            item.smc
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(
+                            item.outlet
+                        )}
+                    </td>
+
+                    <td class="money">
+                        ${money(
+                            item.individual
+                        )}
+                    </td>
+
+                    <td class="money">
+                        ${money(
+                            item.bundle
+                        )}
+                    </td>
+
+                    <td class="money">
+                        ${money(
+                            item.total
+                        )}
+                    </td>
+
+                </tr>
+
+            `)
+            .join("");
+}
+
+
+/* ============================================================
+   USERS
+============================================================ */
+
+function renderUsers() {
+
+    const tbody =
+        document.getElementById(
+            "usersTableBody"
+        );
+
+    if (!tbody) {
+        return;
+    }
+
+
+    if (!state.users.length) {
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="empty">
+                    No users found.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+
+    tbody.innerHTML =
+        state.users.map(
+            user => `
+
+                <tr>
+
+                    <td>
+                        ${escapeHtml(
+                            getStaff(user)
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(
+                            getSMC(user)
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(
+                            getOutlet(user)
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHtml(
+                            user?.role || ""
+                        )}
+                    </td>
+
+                </tr>
+
+            `
+        ).join("");
+}
+
+
+/* ============================================================
+   TOP 3
+============================================================ */
+
+function renderTop3() {
+
+    /*
+     * Recalculate from approved submissions.
+     *
+     * Bundle / Individual classification is resolved
+     * using isBundle(), so it is consistent with Dashboard.
+     */
+
+    const map = new Map();
+
+
+    for (
+        const row
+        of state.submissions
+    ) {
+
+        if (
+            getStatus(row)
+                .toLowerCase() !==
+            "approved"
+        ) {
+            continue;
+        }
+
+
+        const smc =
+            getSMC(row) ||
+            "Unknown";
+
+
+        const amount =
+            getQty(row) *
+            getRate(row);
+
+
+        if (!map.has(smc)) {
+
+            map.set(
+                smc,
+                {
+                    staff:
+                        getStaff(row),
+
+                    smc,
+
+                    outlet:
+                        getOutlet(row),
+
+                    amount: 0,
+
+                    count: 0
+                }
+            );
+        }
+
+
+        const person =
+            map.get(smc);
+
+
+        person.amount += amount;
+
+        person.count++;
+    }
+
+
+    state.top3 =
+        Array.from(
+            map.values()
+        )
+        .sort(
+            (a, b) =>
+                b.amount -
+                a.amount
+        )
+        .slice(0, 3);
+
+
+    /*
+     * Your existing podium HTML can use state.top3.
+     * This function intentionally does not classify Bundle
+     * as Individual.
+     */
+}
+
+
+/* ============================================================
+   INITIAL LOAD
+============================================================ */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    async function() {
+
+        /*
+         * Default monthly filter
+         */
+
+        const summaryMonth =
+            document.getElementById(
+                "summaryMonth"
+            );
+
+        if (
+            summaryMonth &&
+            !summaryMonth.value
+        ) {
+
+            const d =
+                new Date();
+
+            summaryMonth.value =
+                `${d.getFullYear()}-${String(
+                    d.getMonth() + 1
+                ).padStart(2, "0")}`;
+        }
+
+
+        /*
+         * Load everything
+         */
+
+        try {
+
+            await refreshAdminData();
+
+        } catch (error) {
+
+            showMessage(
+                error.message ||
+                "Failed to load admin portal.",
+                "error"
+            );
+        }
+
+
+        /*
+         * Outlet filter
+         */
+
+        const outletFilter =
+            document.getElementById(
+                "submissionOutletFilter"
+            );
+
+        if (outletFilter) {
+
+            outletFilter.addEventListener(
+                "change",
+                function() {
+
+                    renderSubmissionsWithFilters();
+
+                }
+            );
+        }
+
+
+        /*
+         * Search
+         */
+
+        const search =
+            document.getElementById(
+                "submissionSearch"
+            );
+
+        if (search) {
+
+            search.addEventListener(
+                "input",
+                function() {
+
+                    renderSubmissionsWithFilters();
+
+                }
+            );
+        }
+
+
+        /*
+         * Status filter
+         */
+
+        const statusFilter =
+            document.getElementById(
+                "submissionStatusFilter"
+            );
+
+        if (statusFilter) {
+
+            statusFilter.addEventListener(
+                "change",
+                function() {
+
+                    renderSubmissionsWithFilters();
+
+                }
+            );
+        }
+
+
+        /*
+         * Monthly filter
+         */
+
+        if (summaryMonth) {
+
+            summaryMonth.addEventListener(
+                "change",
+                function() {
+
+                    renderMonthlySummary();
+
+                }
+            );
+        }
+    }
+);
+
+
+/* ============================================================
+   FILTERED SUBMISSION RENDER
+============================================================ */
+
+function renderSubmissionsWithFilters() {
+
+    const original =
+        state.submissions;
+
+
+    const filtered =
+        getFilteredSubmissions();
+
+
+    state.submissions =
+        filtered;
+
+
+    renderSubmissions();
+
+
+    state.submissions =
+        original;
+}
+</script>
