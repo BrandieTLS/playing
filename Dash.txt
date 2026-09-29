@@ -1,0 +1,150 @@
+<!-- DASHBOARD TAB -->
+<div id="dashboardTab" class="tab active">
+
+    <div class="section-header">
+        <div>
+            <h2>Dashboard</h2>
+            <p>Overview of incentive performance and submissions.</p>
+        </div>
+
+        <div class="month-control">
+            <label for="dashboardMonth">Month</label>
+            <input type="month" id="dashboardMonth">
+        </div>
+    </div>
+
+    <!-- DASHBOARD CARDS -->
+    <div class="cards">
+
+        <div class="stat-card card-blue">
+            <div class="stat-title">Total Incentive</div>
+            <div class="stat-value" id="dashboardTotal">$0.00</div>
+            <div class="stat-sub">Approved incentives</div>
+        </div>
+
+        <div class="stat-card card-orange">
+            <div class="stat-title">Individual Incentive</div>
+            <div class="stat-value" id="dashboardIndividual">$0.00</div>
+            <div class="stat-sub">Approved individual promotions</div>
+        </div>
+
+        <div class="stat-card card-teal">
+            <div class="stat-title">Bundle Incentive</div>
+            <div class="stat-value" id="dashboardBundle">$0.00</div>
+            <div class="stat-sub">Approved outlet bundles</div>
+        </div>
+
+        <div class="stat-card card-purple">
+            <div class="stat-title">Pending</div>
+            <div class="stat-value" id="dashboardPending">0</div>
+            <div class="stat-sub">Pending submissions</div>
+        </div>
+
+        <div class="stat-card card-green">
+            <div class="stat-title">Approved</div>
+            <div class="stat-value" id="dashboardApproved">0</div>
+            <div class="stat-sub">Approved submissions</div>
+        </div>
+
+        <div class="stat-card card-red">
+            <div class="stat-title">Rejected</div>
+            <div class="stat-value" id="dashboardRejected">0</div>
+            <div class="stat-sub">Rejected submissions</div>
+        </div>
+
+        <div class="stat-card card-gray">
+            <div class="stat-title">Total Staff</div>
+            <div class="stat-value" id="dashboardStaff">0</div>
+            <div class="stat-sub">Registered staff</div>
+        </div>
+
+    </div>
+
+    <!-- INCENTIVE BREAKDOWN -->
+    <div class="panel">
+
+        <div class="panel-title">
+            Incentive Breakdown
+        </div>
+
+        <div class="table-wrapper">
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Approved Submissions</th>
+                        <th>Total Quantity</th>
+                        <th>Total Incentive</th>
+                    </tr>
+                </thead>
+
+                <tbody id="dashboardBreakdownBody">
+
+                    <tr>
+                        <td>
+                            <span class="type-badge">
+                                Individual
+                            </span>
+                        </td>
+
+                        <td id="dashboardIndividualCount">
+                            0
+                        </td>
+
+                        <td id="dashboardIndividualQty">
+                            0
+                        </td>
+
+                        <td class="money" id="dashboardIndividualAmount">
+                            $0.00
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            <span class="type-badge type-bundle">
+                                Bundle
+                            </span>
+                        </td>
+
+                        <td id="dashboardBundleCount">
+                            0
+                        </td>
+
+                        <td id="dashboardBundleQty">
+                            0
+                        </td>
+
+                        <td class="money" id="dashboardBundleAmount">
+                            $0.00
+                        </td>
+                    </tr>
+
+                    <tr class="breakdown-total">
+
+                        <td>
+                            Total
+                        </td>
+
+                        <td id="dashboardTotalCount">
+                            0
+                        </td>
+
+                        <td id="dashboardTotalQty">
+                            0
+                        </td>
+
+                        <td class="money" id="dashboardTotalAmount">
+                            $0.00
+                        </td>
+
+                    </tr>
+
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+
+</div>
