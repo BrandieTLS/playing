@@ -1,0 +1,252 @@
+
+function response($success, $message = "", $redirect = null)
+{
+    $data = [
+        "success" => $success,
+        "message" => $message
+    ];
+
+    if ($redirect !== null) {
+        $data["redirect"] = $redirect;
+    }
+
+    echo json_encode($data);
+    exit;
+}
+
+
+// ============================================================
+// ONLY ALLOW POST
+// ============================================================
+
+if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+
+    response(
+        false,
+        "Invalid request method."
+    );
+}
+
+
+// ============================================================
+// GET SALES MAN CODE
+// ============================================================
+
+$sales_man_code = trim(
+    $_POST["sales_man_code"] ?? ""
+);
+
+
+if ($sales_man_code === "") {
+
+    response(
+        false,
+        "Please enter your Sales Man Code."
+    );
+}
+
+
+// ============================================================
+// DATABASE CONNECTION
+// ============================================================
+
+$conn = mysqli_init();
+
+mysqli_ssl_set(
+    $conn,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+);
+
+if (
+    !mysqli_real_connect(
+        $conn,
+        $host,
+        $username,
+        $password,
+        $dbname,
+        $port,
+        NULL,
+        MYSQLI_CLIENT_SSL
+    )
+) {
+
+    response(
+        false,
+        "Database connection failed."
+    );
+}
+
+
+// ============================================================
+// FIND STAFF
+// ============================================================
+
+$sql = "
+    SELECT
+        id,
+        staff_name,
+        sales_man_code,
+        outlet,
+        role
+    FROM staff_details
+    WHERE sales_man_code = ?
+    LIMIT 1
+";
+
+
+$stmt = mysqli_prepare($conn, $sql);
+
+
+if (!$stmt) {
+
+    mysqli_close($conn);
+
+    response(
+        false,
+        "Unable to prepare login query."
+    );
+}
+
+
+mysqli_stmt_bind_param(
+    $stmt,
+    "s",
+    $sales_man_code
+);
+
+
+mysqli_stmt_execute($stmt);
+
+
+$result = mysqli_stmt_get_result($stmt);
+
+
+if (!$result || mysqli_num_rows($result) === 0) {
+
+    mysqli_stmt_close($stmt);
+    mysqli_close($conn);
+
+    response(
+        false,
+        "Invalid Sales Man Code."
+    );
+}
+
+
+$staff = mysqli_fetch_assoc($result);
+
+
+mysqli_stmt_close($stmt);
+
+
+// ============================================================
+// GET STAFF INFORMATION
+// ============================================================
+
+$staff_id = $staff["id"] ?? "";
+$staff_name = $staff["staff_name"] ?? "";
+$staff_code = $staff["sales_man_code"] ?? "";
+$outlet = $staff["outlet"] ?? "";
+$role = $staff["role"] ?? "";
+
+
+// ============================================================
+// NORMALISE ROLE
+// ============================================================
+
+$role_normalized = strtolower(
+    trim($role)
+);
+
+
+// ============================================================
+// REGENERATE SESSION ID
+// ============================================================
+
+session_regenerate_id(true);
+
+
+// ============================================================
+// STORE LOGIN SESSION
+// ============================================================
+
+$_SESSION["logged_in"] = true;
+
+$_SESSION["staff_id"] = $staff_id;
+
+$_SESSION["sales_man_code"] = $staff_code;
+
+$_SESSION["staff_name"] = $staff_name;
+
+$_SESSION["outlet"] = $outlet;
+
+$_SESSION["role"] = $role;
+
+
+// ============================================================
+// DECIDE WHERE TO REDIRECT
+// ============================================================
+
+$redirect = "";
+
+
+switch ($role_normalized) {
+
+    // --------------------------------------------------------
+    // ADMIN
+    // --------------------------------------------------------
+
+    case "admin":
+
+        $redirect = "admin.html";
+
+        break;
+
+
+    case "staff":
+
+        $redirect = "staff.html";
+
+        break;
+
+
+    // --------------------------------------------------------
+    // UNKNOWN ROLE
+    // --------------------------------------------------------
+
+    default:
+
+        session_unset();
+        session_destroy();
+
+        mysqli_close($conn);
+
+        response(
+            false,
+            "Your account role is not configured. Please contact the administrator."
+        );
+}
+
+
+// ============================================================
+// CLOSE DATABASE
+// ============================================================
+
+mysqli_close($conn);
+
+
+// ============================================================
+// LOGIN SUCCESS
+// ============================================================
+
+response(
+    true,
+    "Login successful.",
+    $redirect
+);
+
+?>
