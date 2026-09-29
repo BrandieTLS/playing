@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+<title>Portal</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Arial, Helvetica, sans-serif;
+        background: #f5f6f8;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .login-container {
+        width: 100%;
+        max-width: 420px;
+        padding: 20px;
+    }
+
+    .login-card {
+        background: #ffffff;
+        border-radius: 14px;
+        padding: 40px 35px;
+
+        box-shadow:
+            0 8px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .logo {
+        text-align: center;
+        margin-bottom: 8px;
+    }
+
+    .logo h1 {
+        margin: 0;
+        font-size: 28px;
+        color: #222222;
+    }
+
+    .subtitle {
+        text-align: center;
+        color: #777777;
+        margin-bottom: 30px;
+        font-size: 14px;
+    }
+
+    .form-group {
+        margin-bottom: 18px;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 7px;
+
+        font-size: 14px;
+        font-weight: bold;
+
+        color: #333333;
+    }
+
+    input {
+        width: 100%;
+
+        padding: 13px 14px;
+
+        border: 1px solid #d5d8dc;
+        border-radius: 8px;
+
+        font-size: 15px;
+
+        outline: none;
+
+        transition: border-color 0.2s;
+    }
+
+    input:focus {
+        border-color: #333333;
+    }
+
+    button {
+        width: 100%;
+
+        padding: 14px;
+
+        border: none;
+        border-radius: 8px;
+
+        background: #222222;
+        color: #ffffff;
+
+        font-size: 15px;
+        font-weight: bold;
+
+        cursor: pointer;
+
+        transition: background 0.2s;
+    }
+
+    button:hover {
+        background: #333333;
+    }
+
+    button:disabled {
+        background: #999999;
+        cursor: not-allowed;
+    }
+
+    .error {
+        display: none;
+
+        background: #fff0f0;
+        color: #c62828;
+
+        border: 1px solid #ffcaca;
+
+        padding: 11px 13px;
+
+        border-radius: 7px;
+
+        font-size: 13px;
+
+        margin-bottom: 18px;
+    }
+
+    .success {
+        display: none;
+
+        background: #eefaf1;
+        color: #237a3b;
+
+        border: 1px solid #bce8c8;
+
+        padding: 11px 13px;
+
+        border-radius: 7px;
+
+        font-size: 13px;
+
+        margin-bottom: 18px;
+    }
+
+    .footer {
+        text-align: center;
+
+        margin-top: 20px;
+
+        color: #999999;
+
+        font-size: 12px;
+    }
+
+    @media (max-width: 480px) {
+
+        .login-card {
+            padding: 30px 22px;
+        }
+
+    }
+</style>
+
+
+</head>
+
+<body>
+
+<div class="login-container">
+
+
+<div class="login-card">
+
+
+    <div class="subtitle">
+        Incentive Management Portal
+    </div>
+
+    <div
+        id="errorMessage"
+        class="error">
+    </div>
+
+    <div
+        id="successMessage"
+        class="success">
+    </div>
+
+    <form id="loginForm">
+
+        <div class="form-group">
+
+            <label for="smc">
+                Sales Man Code
+            </label>
+
+            <input
+                type="text"
+                id="smc"
+                name="smc"
+                maxlength="5"
+                placeholder="Enter your Sales Man Code"
+                autocomplete="off"
+                required
+            >
+
+        </div>
+
+        <button
+            type="submit"
+            id="loginButton">
+
+            Login
+
+        </button>
+
+    </form>
+
+   
+</div>
+
+
+</div>
+
+<script>
+
+document
+.getElementById("loginForm")
+.addEventListener("submit", async function(e) {
+
+    e.preventDefault();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | GET SMC
+    |--------------------------------------------------------------------------
+    */
+
+    const smc = document
+        .getElementById("smc")
+        .value
+        .trim();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ELEMENTS
+    |--------------------------------------------------------------------------
+    */
+
+    const errorMessage =
+        document.getElementById("errorMessage");
+
+    const successMessage =
+        document.getElementById("successMessage");
+
+    const loginButton =
+        document.getElementById("loginButton");
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | RESET MESSAGES
+    |--------------------------------------------------------------------------
+    */
+
+    errorMessage.style.display = "none";
+
+    successMessage.style.display = "none";
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATE SMC
+    |--------------------------------------------------------------------------
+    */
+
+    if (!smc) {
+
+        errorMessage.textContent =
+            "Please enter your Sales Man Code.";
+
+        errorMessage.style.display = "block";
+
+        return;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | LOADING
+    |--------------------------------------------------------------------------
+    */
+
+    loginButton.disabled = true;
+
+    loginButton.textContent = "Logging in...";
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SEND LOGIN REQUEST
+    |--------------------------------------------------------------------------
+    */
+
+    try {
+
+        const response = await fetch(
+            "index.php",
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body: JSON.stringify({
+                    action: "login",
+                    smc: smc
+                })
+            }
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | READ RESPONSE
+        |--------------------------------------------------------------------------
+        */
+
+        const data =
+            await response.json();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | LOGIN FAILED
+        |--------------------------------------------------------------------------
+        */
+
+        if (!response.ok || !data.success) {
+
+            errorMessage.textContent =
+                data.message ||
+                "Invalid Sales Man Code.";
+
+            errorMessage.style.display =
+                "block";
+
+            loginButton.disabled = false;
+
+            loginButton.textContent =
+                "Login";
+
+            return;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | LOGIN SUCCESS
+        |--------------------------------------------------------------------------
+        */
+
+        successMessage.textContent =
+            "Login successful. Redirecting...";
+
+        successMessage.style.display =
+            "block";
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | ROLE REDIRECT
+        |--------------------------------------------------------------------------
+        */
+
+        if (data.role === "staff") {
+
+            window.location.href =
+                "staff.html";
+
+        }
+
+        else if (data.role === "admin") {
+
+            window.location.href =
+                "admin.html";
+
+        }
+
+        else {
+
+            errorMessage.textContent =
+                "Invalid account role.";
+
+            errorMessage.style.display =
+                "block";
+
+            loginButton.disabled = false;
+
+            loginButton.textContent =
+                "Login";
+        }
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CONNECTION ERROR
+    |--------------------------------------------------------------------------
+    */
+
+    catch (error) {
+
+        console.error(error);
+
+        errorMessage.textContent =
+            "Unable to connect to the server.";
+
+        errorMessage.style.display =
+            "block";
+
+        loginButton.disabled = false;
+
+        loginButton.textContent =
+            "Login";
+    }
+
+});
+
+</script>
+
+</body>
+</html>
