@@ -1053,6 +1053,16 @@
                     Clear
                 </button>
 
+                <button class="btn btn-success btn-small"
+                        onclick="exportFilteredExcel()">
+                    Export Excel
+                </button>
+
+                <button class="btn btn-secondary btn-small"
+                        onclick="exportFilteredPDF()">
+                    Export PDF
+                </button>
+
             </div>
 
 
@@ -3621,17 +3631,19 @@ function renderStaffFilter() {
 }
 
 // outlet filter
-function renderOutletFilter(submissions) {
+function renderOutletFilter() {
 
     const outletFilter = document.getElementById("submissionoutletFilter");
 
+    const current = outletFilter.value;
+
     const outlets = [
         ...new Set(
-            submissions
-                .map(item => item.outlet)
-                .filter(outlet => outlet && outlet.trim() !== "")
+            allSubmissions
+                .map(item => String(item.outlet || "").trim())
+                .filter(outlet => outlet !== "")
         )
-    ].sort();
+    ].sort((a, b) => a.localeCompare(b));
 
     outletFilter.innerHTML = `<option value="">All Outlets</option>`;
 
@@ -3641,6 +3653,13 @@ function renderOutletFilter(submissions) {
         option.textContent = outlet;
         outletFilter.appendChild(option);
     });
+
+    if (
+        Array.from(outletFilter.options)
+            .some(option => option.value === current)
+    ) {
+        outletFilter.value = current;
+    }
 }
 
 /* =========================================================
@@ -3649,7 +3668,7 @@ function renderOutletFilter(submissions) {
 
 function getFilteredSubmissions() {
 
-    const outlet = document.getElementById("submissionoutletFilter").value.toLowerCase();
+    const outlet = document.getElementById("submissionoutletFilter").value.trim().toLowerCase();
 
     const staff =
         document.getElementById(
@@ -3699,6 +3718,18 @@ function getFilteredSubmissions() {
                 String(row.SMC)
                     .toLowerCase()
                     !== staff
+            ) {
+
+                return false;
+            }
+
+
+            if (
+                outlet &&
+                String(row.outlet || "")
+                    .trim()
+                    .toLowerCase()
+                    !== outlet
             ) {
 
                 return false;
@@ -3883,6 +3914,198 @@ function applySubmissionFilters() {
 }
 
 
+function exportFilteredExcel() {
+
+    const rows = getFilteredSubmissions();
+
+    const headers = [
+        "ID",
+        "SMC",
+        "Staff",
+        "Outlet",
+        "Promotion",
+        "Type",
+        "Quantity",
+        "Amount",
+        "Status",
+        "Date"
+    ];
+
+    const tableRows = rows.map(row => [
+        row.id,
+        row.SMC,
+        row.staff_name,
+        row.outlet,
+        row.promo,
+        row.type,
+        row.quantity,
+        row.amount,
+        row.status,
+        row.submission_date
+    ]);
+
+    const escapeCell = value =>
+        String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+
+    let html = `
+        <html>
+        <head>
+            <meta charset="UTF-8">
+        </head>
+        <body>
+            <table border="1">
+                <thead>
+                    <tr>
+                        ${headers.map(h => `<th>${escapeCell(h)}</th>`).join("")}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows.map(row => `
+                        <tr>
+                            ${row.map(cell => `<td>${escapeCell(cell)}</td>`).join("")}
+                        </tr>
+                    `).join("")}
+                </tbody>
+            </table>
+        </body>
+        </html>
+    `;
+
+    const blob = new Blob(["\ufeff", html], {
+        type: "application/vnd.ms-excel;charset=utf-8;"
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "filtered_submissions.xls";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+
+function exportFilteredPDF() {
+
+    const rows = getFilteredSubmissions();
+
+    const headers = [
+        "ID",
+        "SMC",
+        "Staff",
+        "Outlet",
+        "Promotion",
+        "Type",
+        "Quantity",
+        "Amount",
+        "Status",
+        "Date"
+    ];
+
+    const escapeHtmlForPdf = value =>
+        String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+
+    const tableRows = rows.map(row => `
+        <tr>
+            <td>${escapeHtmlForPdf(row.id)}</td>
+            <td>${escapeHtmlForPdf(row.SMC)}</td>
+            <td>${escapeHtmlForPdf(row.staff_name)}</td>
+            <td>${escapeHtmlForPdf(row.outlet)}</td>
+            <td>${escapeHtmlForPdf(row.promo)}</td>
+            <td>${escapeHtmlForPdf(row.type)}</td>
+            <td>${escapeHtmlForPdf(row.quantity)}</td>
+            <td>${escapeHtmlForPdf(row.amount)}</td>
+            <td>${escapeHtmlForPdf(row.status)}</td>
+            <td>${escapeHtmlForPdf(row.submission_date)}</td>
+        </tr>
+    `).join("");
+
+    const printWindow = window.open("", "_blank");
+
+    if (!printWindow) {
+        showMessage("Please allow pop-ups to export PDF.", "error");
+        return;
+    }
+
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Filtered Submissions</title>
+            <style>
+                body {
+                    font-family: Arial, Helvetica, sans-serif;
+                    margin: 20px;
+                    color: #111827;
+                }
+                h2 {
+                    margin-bottom: 5px;
+                }
+                p {
+                    color: #6b7280;
+                    font-size: 12px;
+                    margin-top: 0;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 10px;
+                }
+                th, td {
+                    border: 1px solid #d1d5db;
+                    padding: 6px;
+                    text-align: left;
+                    vertical-align: top;
+                }
+                th {
+                    background: #f3f4f6;
+                    font-weight: bold;
+                }
+                @media print {
+                    @page {
+                        size: landscape;
+                        margin: 10mm;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <h2>Filtered Submissions</h2>
+            <p>Exported from Incentive Management Portal</p>
+            <table>
+                <thead>
+                    <tr>
+                        ${headers.map(h => `<th>${escapeHtmlForPdf(h)}</th>`).join("")}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows || `<tr><td colspan="10">No submissions found.</td></tr>`}
+                </tbody>
+            </table>
+        </body>
+        </html>
+    `);
+
+    printWindow.document.close();
+
+    printWindow.onload = function() {
+        printWindow.focus();
+        printWindow.print();
+    };
+}
+
+
 function clearSubmissionFilters() {
 
     document.getElementById(
@@ -3897,6 +4120,11 @@ function clearSubmissionFilters() {
 
     document.getElementById(
         "submissionTypeFilter"
+    ).value = "";
+
+
+    document.getElementById(
+        "submissionoutletFilter"
     ).value = "";
 
 
@@ -6507,14 +6735,21 @@ async function loadAdminInfo() {
             );
 
 
+        const root =
+            result || {};
+
+
         const data =
-            result &&
-            result.data !== undefined
-                ? result.data
-                : result;
+            root.data &&
+            typeof root.data === "object"
+                ? root.data
+                : (root.admin &&
+                   typeof root.admin === "object"
+                    ? root.admin
+                    : root);
 
 
-        const name =
+        let name =
             pick(
                 data,
                 [
@@ -6522,11 +6757,11 @@ async function loadAdminInfo() {
                     "name",
                     "admin_name"
                 ],
-                "Admin"
+                ""
             );
 
 
-        const smc =
+        let smc =
             pick(
                 data,
                 [
@@ -6534,8 +6769,53 @@ async function loadAdminInfo() {
                     "SMC",
                     "smc"
                 ],
-                "-"
+                ""
             );
+
+
+        /*
+         * If the session response contains the SMC but not the
+         * staff name, use the already-loaded staff list to get
+         * the correct account name.
+         */
+
+        if (
+            (!name || name === "Admin") &&
+            smc &&
+            Array.isArray(allUsers)
+        ) {
+
+            const matchedUser =
+                allUsers.find(
+                    user =>
+                        String(
+                            user.sales_man_code ||
+                            user.SMC ||
+                            user.smc ||
+                            ""
+                        ).trim().toLowerCase() ===
+                        String(smc).trim().toLowerCase()
+                );
+
+
+            if (matchedUser) {
+
+                name =
+                    matchedUser.staff_name ||
+                    matchedUser.name ||
+                    name;
+            }
+        }
+
+
+        if (!name) {
+            name = "Admin";
+        }
+
+
+        if (!smc) {
+            smc = "-";
+        }
 
 
         document.getElementById(
