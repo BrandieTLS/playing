@@ -1,0 +1,6650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Admin Portal - Incentive Management</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f5f6f8;
+            color: #1f2937;
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font-family: inherit;
+        }
+
+        .header {
+            background: #111827;
+            color: white;
+            padding: 18px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left h1 {
+            margin: 0;
+            font-size: 23px;
+        }
+
+        .header-left p {
+            margin: 5px 0 0;
+            color: #d1d5db;
+            font-size: 13px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .admin-info {
+            text-align: right;
+            font-size: 13px;
+        }
+
+        .admin-info strong {
+            display: block;
+            color: white;
+        }
+
+        .admin-info span {
+            color: #d1d5db;
+        }
+
+        .container {
+            padding: 25px 30px;
+            max-width: 1600px;
+            margin: auto;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            border-bottom: 1px solid #d1d5db;
+            margin-bottom: 25px;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            border: none;
+            background: transparent;
+            padding: 13px 18px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #6b7280;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            color: #111827;
+        }
+
+        .tab-btn.active {
+            color: #111827;
+            font-weight: bold;
+            border-bottom-color: #111827;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .page-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .page-title h2 {
+            margin: 0;
+            font-size: 21px;
+        }
+
+        .page-title p {
+            margin: 5px 0 0;
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+        }
+
+        .stat-card .label {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 26px;
+            font-weight: bold;
+            color: #111827;
+        }
+
+        .stat-card .sub {
+            margin-top: 5px;
+            color: #9ca3af;
+            font-size: 12px;
+        }
+
+        .section-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .section-header h3 {
+            margin: 0;
+            font-size: 17px;
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-group label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #4b5563;
+        }
+
+        input,
+        select {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-radius: 7px;
+            padding: 10px 11px;
+            background: white;
+            color: #111827;
+            outline: none;
+            font-size: 13px;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #6b7280;
+        }
+
+        textarea {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-radius: 7px;
+            padding: 10px 11px;
+            resize: vertical;
+            outline: none;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 7px;
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: 0.15s;
+        }
+
+        .btn:hover {
+            opacity: 0.88;
+        }
+
+        .btn-primary {
+            background: #111827;
+            color: white;
+        }
+
+        .btn-success {
+            background: #15803d;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #d97706;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-light {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-small {
+            padding: 7px 10px;
+            font-size: 12px;
+        }
+
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 850px;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px 10px;
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 12px;
+            color: #4b5563;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+            vertical-align: middle;
+        }
+
+        tr:hover td {
+            background: #fafafa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .badge-approved {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-individual {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        .badge-bundle {
+            background: #f3e8ff;
+            color: #6b21a8;
+        }
+
+        .badge-active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-upcoming {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-expired {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .empty {
+            text-align: center;
+            color: #9ca3af;
+            padding: 30px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #6b7280;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 9px;
+            padding: 18px;
+        }
+
+        .summary-card h4 {
+            margin: 0 0 8px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .summary-card strong {
+            font-size: 22px;
+        }
+
+        .top3-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+            margin-bottom: 20px;
+        }
+
+        .top-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .top-card .place {
+            font-size: 14px;
+            font-weight: bold;
+            color: #6b7280;
+        }
+
+        .top-card .staff-name {
+            font-size: 19px;
+            font-weight: bold;
+            margin: 8px 0 3px;
+        }
+
+        .top-card .staff-code {
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        .top-card .amount {
+            margin-top: 15px;
+            font-size: 23px;
+            font-weight: bold;
+        }
+
+        .top-card .share {
+            margin-top: 5px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #4b5563;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            padding: 18px 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .close-btn {
+            border: none;
+            background: transparent;
+            font-size: 26px;
+            cursor: pointer;
+            color: #6b7280;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .detail-box {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 7px;
+            padding: 12px;
+        }
+
+        .detail-box label {
+            display: block;
+            color: #6b7280;
+            font-size: 11px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .detail-box div {
+            font-size: 13px;
+            color: #111827;
+            word-break: break-word;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .item-list {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .item-list li {
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+
+        .message {
+            padding: 11px 14px;
+            border-radius: 7px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+
+        .message-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .message-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .message-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .bundle-items {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            margin-top: 5px;
+        }
+
+        .bundle-item {
+            padding: 9px 11px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        @media (max-width: 1100px) {
+
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .filters {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .summary-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 700px) {
+
+            .container {
+                padding: 18px 15px;
+            }
+
+            .header {
+                padding: 15px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .header-right {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .dashboard-grid,
+            .summary-cards,
+            .top3-grid,
+            .form-grid,
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filters {
+                grid-template-columns: 1fr;
+            }
+
+            .form-group.full {
+                grid-column: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="header">
+
+    <div class="header-left">
+
+        <h1>Incentive Management Portal</h1>
+
+        <p>Admin Dashboard</p>
+
+    </div>
+
+    <div class="header-right">
+
+        <div class="admin-info">
+
+            <strong id="adminName">
+                Admin
+            </strong>
+
+            <span id="adminSMC">
+                -
+            </span>
+
+        </div>
+
+        <button class="btn btn-danger"
+                onclick="logout()">
+            Logout
+        </button>
+
+    </div>
+
+</header>
+
+
+<div class="container">
+
+    <div id="messageArea"></div>
+
+
+    <div class="tabs">
+
+        <button class="tab-btn active"
+                data-tab="dashboard">
+            Dashboard
+        </button>
+
+        <button class="tab-btn"
+                data-tab="submissions">
+            Submissions
+        </button>
+
+        <button class="tab-btn"
+                data-tab="monthly">
+            Monthly Summary
+        </button>
+
+        <button class="tab-btn"
+                data-tab="top3">
+            Top 3
+        </button>
+
+        <button class="tab-btn"
+                data-tab="promotions">
+            Promotions
+        </button>
+
+        <button class="tab-btn"
+                data-tab="users">
+            Users
+        </button>
+
+    </div>
+
+
+    <!-- =====================================================
+         DASHBOARD
+    ====================================================== -->
+
+    <section id="dashboard"
+             class="tab-content active">
+
+        <div class="page-title">
+
+            <div>
+
+                <h2>Dashboard</h2>
+
+                <p>
+                    Overview of incentive submissions
+                    and approved amounts.
+                </p>
+
+            </div>
+
+            <button class="btn btn-light"
+                    onclick="refreshCurrentTab()">
+                Refresh
+            </button>
+
+        </div>
+
+
+        <div class="dashboard-grid">
+
+            <div class="stat-card">
+
+                <div class="label">
+                    Total Submissions
+                </div>
+
+                <div class="value"
+                     id="statTotalSubmissions">
+                    0
+                </div>
+
+                <div class="sub">
+                    All submissions
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="label">
+                    Pending
+                </div>
+
+                <div class="value"
+                     id="statPending">
+                    0
+                </div>
+
+                <div class="sub">
+                    Awaiting approval
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="label">
+                    Total Incentive
+                </div>
+
+                <div class="value"
+                     id="statIndividual">
+                    $0.00
+                </div>
+
+                <div class="sub">
+                    Approved individual incentives
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="label">
+                    Bundle
+                </div>
+
+                <div class="value"
+                     id="statBundle">
+                    $0.00
+                </div>
+
+                <div class="sub">
+                    Approved outlet bundle pool
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="section-card">
+
+            <div class="section-header">
+
+                <h3>
+                    Recent Submissions
+                </h3>
+
+                <button class="btn btn-light btn-small"
+                        onclick="refreshCurrentTab()">
+                    Refresh
+                </button>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>ID</th>
+                            <th>SMC</th>
+                            <th>Staff</th>
+                            <th>Outlet</th>
+                            <th>Promotion</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="recentSubmissionsBody">
+
+                        <tr>
+
+                            <td colspan="7"
+                                class="loading">
+                                Loading...
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         SUBMISSIONS
+    ====================================================== -->
+
+    <section id="submissions"
+             class="tab-content">
+
+        <div class="page-title">
+
+            <div>
+
+                <h2>Submissions</h2>
+
+                <p>
+                    Review, approve, reject and edit
+                    incentive submissions.
+                </p>
+
+            </div>
+
+            <button class="btn btn-light"
+                    onclick="refreshCurrentTab()">
+                Refresh
+            </button>
+
+        </div>
+
+
+        <div class="section-card">
+
+            <div class="filters">
+
+                <div class="filter-group">
+
+                    <label>
+                        Staff / SMC
+                    </label>
+
+                    <select id="submissionStaffFilter">
+
+                        <option value="">
+                            All Staff
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="filter-group">
+
+                    <label>
+                        Status
+                    </label>
+
+                    <select id="submissionStatusFilter">
+
+                        <option value="">
+                            All Status
+                        </option>
+
+                        <option value="pending">
+                            Pending
+                        </option>
+
+                        <option value="approved">
+                            Approved
+                        </option>
+
+                        <option value="rejected">
+                            Rejected
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="filter-group">
+
+                    <label>
+                        Type
+                    </label>
+
+                    <select id="submissionTypeFilter">
+
+                        <option value="">
+                            All Types
+                        </option>
+
+                        <option value="individual">
+                            Individual
+                        </option>
+
+                        <option value="outlet_bundle">
+                            Outlet Bundle
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="filter-group">
+    <label for="submissionoutletFilter">Outlet</label>
+    <select id="submissionoutletFilter">
+        <option value="">All Outlets</option>
+    </select>
+</div>
+
+
+                <div class="filter-group">
+
+                    <label>
+                        Date
+                    </label>
+
+                    <input type="date"
+                           id="submissionDateFilter">
+
+                </div>
+
+
+                <div class="filter-group">
+
+                    <label>
+                        Search
+                    </label>
+
+                    <input type="text"
+                           id="submissionSearch"
+                           placeholder="ID, staff, SMC, promotion...">
+
+                </div>
+
+            </div>
+
+
+            <div class="action-buttons"
+                 style="margin-bottom:15px;">
+
+                <button class="btn btn-primary btn-small"
+                        onclick="applySubmissionFilters()">
+                    Apply Filters
+                </button>
+
+                <button class="btn btn-light btn-small"
+                        onclick="clearSubmissionFilters()">
+                    Clear
+                </button>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>ID</th>
+                            <th>SMC</th>
+                            <th>Staff</th>
+                            <th>Outlet</th>
+                            <th>Promotion</th>
+                            <th>Type</th>
+                            <th>Quantity</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Action</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="submissionsBody">
+
+                        <tr>
+
+                            <td colspan="10"
+                                class="loading">
+                                Loading...
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         MONTHLY SUMMARY
+    ====================================================== -->
+
+    <section id="monthly"
+             class="tab-content">
+
+        <div class="page-title">
+
+            <div>
+
+                <h2>
+                    Monthly Summary
+                </h2>
+
+                <p>
+                    Approved incentive totals by
+                    staff and month.
+                </p>
+
+            </div>
+
+
+            <div class="action-buttons">
+
+                <input type="month"
+                       id="monthlyFilter"
+                       style="width:180px;">
+
+                <button class="btn btn-light"
+                        onclick="refreshCurrentTab()">
+                    Refresh
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="summary-cards">
+
+            <div class="summary-card">
+
+                <h4>
+                    Approved Individual
+                </h4>
+
+                <strong id="monthlyIndividual">
+                    $0.00
+                </strong>
+
+            </div>
+
+
+            <div class="summary-card">
+
+                <h4>
+                    Approved Bundle Pool
+                </h4>
+
+                <strong id="monthlyBundle">
+                    $0.00
+                </strong>
+
+            </div>
+
+
+            <div class="summary-card">
+
+                <h4>
+                    Total Approved
+                </h4>
+
+                <strong id="monthlyTotal">
+                    $0.00
+                </strong>
+
+            </div>
+
+
+            <div class="summary-card">
+
+                <h4>
+                    Approved Submissions
+                </h4>
+
+                <strong id="monthlyApprovedCount">
+                    0
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="section-card">
+
+            <div class="section-header">
+
+                <h3>
+                    Staff Monthly Summary
+                </h3>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Rank</th>
+                            <th>SMC</th>
+                            <th>Staff</th>
+                            <th>Outlet</th>
+                            <th>Individual Incentive</th>
+                            <th>Bundle</th>
+                            <th>Total</th>
+                            <th>Action</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="monthlyBody">
+
+                        <tr>
+
+                            <td colspan="8"
+                                class="loading">
+                                Loading...
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         TOP 3
+    ====================================================== -->
+
+    <section id="top3"
+             class="tab-content">
+
+        <div class="page-title">
+
+            <div>
+
+                <h2>
+                    Top 3
+                </h2>
+
+                <p>
+                    Top 3 staff based on approved
+                    individual incentive.
+                    Bundle pool is distributed
+                    50% / 35% / 15%.
+                </p>
+
+            </div>
+
+
+            <div class="action-buttons">
+
+                <input type="month"
+                       id="top3Month"
+                       style="width:180px;">
+
+                <button class="btn btn-light"
+                        onclick="refreshCurrentTab()">
+                    Refresh
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="summary-cards">
+
+            <div class="summary-card">
+
+                <h4>
+                    Monthly Bundle Pool
+                </h4>
+
+                <strong id="top3BundlePool">
+                    $0.00
+                </strong>
+
+            </div>
+
+
+            <div class="summary-card">
+
+                <h4>
+                    1st Place Share
+                </h4>
+
+                <strong>
+                    50%
+                </strong>
+
+            </div>
+
+
+            <div class="summary-card">
+
+                <h4>
+                    2nd Place Share
+                </h4>
+
+                <strong>
+                    35%
+                </strong>
+
+            </div>
+
+
+            <div class="summary-card">
+
+                <h4>
+                    3rd Place Share
+                </h4>
+
+                <strong>
+                    15%
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="top3-grid">
+
+            <div class="top-card">
+
+                <div class="place">
+                    1st Place — 50%
+                </div>
+
+                <div class="staff-name"
+                     id="top1Name">
+                    -
+                </div>
+
+                <div class="staff-code"
+                     id="top1Code">
+                    -
+                </div>
+
+                <div class="amount"
+                     id="top1Amount">
+                    $0.00
+                </div>
+
+                <div class="share"
+                     id="top1Payout">
+                    Bundle payout: $0.00
+                </div>
+
+            </div>
+
+
+            <div class="top-card">
+
+                <div class="place">
+                    2nd Place — 35%
+                </div>
+
+                <div class="staff-name"
+                     id="top2Name">
+                    -
+                </div>
+
+                <div class="staff-code"
+                     id="top2Code">
+                    -
+                </div>
+
+                <div class="amount"
+                     id="top2Amount">
+                    $0.00
+                </div>
+
+                <div class="share"
+                     id="top2Payout">
+                    Bundle payout: $0.00
+                </div>
+
+            </div>
+
+
+            <div class="top-card">
+
+                <div class="place">
+                    3rd Place — 15%
+                </div>
+
+                <div class="staff-name"
+                     id="top3Name">
+                    -
+                </div>
+
+                <div class="staff-code"
+                     id="top3Code">
+                    -
+                </div>
+
+                <div class="amount"
+                     id="top3Amount">
+                    $0.00
+                </div>
+
+                <div class="share"
+                     id="top3Payout">
+                    Bundle payout: $0.00
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="section-card">
+
+            <div class="section-header">
+
+                <h3>
+                    Top 3 Ranking
+                </h3>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Rank</th>
+                            <th>SMC</th>
+                            <th>Staff</th>
+                            <th>Individual Incentive</th>
+                            <th>Share</th>
+                            <th>Bundle Payout</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="top3Body">
+
+                        <tr>
+
+                            <td colspan="6"
+                                class="loading">
+                                Loading...
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         PROMOTIONS
+    ====================================================== -->
+
+    <section id="promotions"
+             class="tab-content">
+
+        <div class="page-title">
+
+            <div>
+
+                <h2>
+                    Promotions
+                </h2>
+
+                <p>
+                    Manage individual and outlet
+                    bundle promotions.
+                </p>
+
+            </div>
+
+
+            <div class="action-buttons">
+
+                <button class="btn btn-primary"
+                        onclick="openAddPromotionModal()">
+                    Add Promotion
+                </button>
+
+                <button class="btn btn-light"
+                        onclick="refreshCurrentTab()">
+                    Refresh
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="section-card">
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>ID</th>
+                            <th>Promotion</th>
+                            <th>Rate</th>
+                            <th>Type</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Status</th>
+                            <th>Bundle Items</th>
+                            <th>Action</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="promotionsBody">
+
+                        <tr>
+
+                            <td colspan="9"
+                                class="loading">
+                                Loading...
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         USERS
+    ====================================================== -->
+
+    <section id="users"
+             class="tab-content">
+
+        <div class="page-title">
+
+            <div>
+
+                <h2>
+                    Users
+                </h2>
+
+                <p>
+                    Manage staff and admin accounts.
+                </p>
+
+            </div>
+
+
+            <div class="action-buttons">
+
+                <button class="btn btn-primary"
+                        onclick="openAddUserModal()">
+                    Add User
+                </button>
+
+                <button class="btn btn-light"
+                        onclick="refreshCurrentTab()">
+                    Refresh
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="section-card">
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>SMC</th>
+                            <th>Staff Name</th>
+                            <th>Outlet</th>
+                            <th>Role</th>
+                            <th>Action</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="usersBody">
+
+                        <tr>
+
+                            <td colspan="5"
+                                class="loading">
+                                Loading...
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+<!-- =====================================================
+     SUBMISSION MODAL
+====================================================== -->
+
+<div class="modal"
+     id="submissionModal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h3>
+                Submission Details
+            </h3>
+
+            <button class="close-btn"
+                    onclick="closeModal('submissionModal')">
+                &times;
+            </button>
+
+        </div>
+
+
+        <div class="modal-body"
+             id="submissionModalBody">
+
+            <div class="loading">
+                Loading...
+            </div>
+
+        </div>
+
+
+        <div class="modal-footer">
+
+            <button class="btn btn-light"
+                    onclick="closeModal('submissionModal')">
+                Close
+            </button>
+
+            <button class="btn btn-warning"
+                    id="editSubmissionBtn">
+                Edit Promotion
+            </button>
+
+            <button class="btn btn-success"
+                    id="approveSubmissionBtn">
+                Approve
+            </button>
+
+            <button class="btn btn-danger"
+                    id="rejectSubmissionBtn">
+                Reject
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     ADD / EDIT PROMOTION MODAL
+====================================================== -->
+
+<div class="modal"
+     id="promotionModal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h3 id="promotionModalTitle">
+                Add Promotion
+            </h3>
+
+            <button class="close-btn"
+                    onclick="closeModal('promotionModal')">
+                &times;
+            </button>
+
+        </div>
+
+
+        <div class="modal-body">
+
+            <form id="promotionForm">
+
+                <input type="hidden"
+                       id="promotionId">
+
+
+                <div class="form-grid">
+
+                    <div class="form-group full">
+
+                        <label>
+                            Promotion Name
+                        </label>
+
+                        <input type="text"
+                               id="promotionName"
+                               required>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Rate
+                        </label>
+
+                        <input type="number"
+                               id="promotionRate"
+                               step="0.01"
+                               min="0"
+                               required>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Promotion Type
+                        </label>
+
+                        <select id="promotionType"
+                                required>
+
+                            <option value="individual">
+                                Individual
+                            </option>
+
+                            <option value="outlet_bundle">
+                                Outlet Bundle
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Start Date
+                        </label>
+
+                        <input type="date"
+                               id="promotionStartDate">
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            End Date
+                        </label>
+
+                        <input type="date"
+                               id="promotionEndDate">
+
+                    </div>
+
+
+                    <div class="form-group full hidden"
+                         id="bundleFields">
+
+                        <label>
+                            Bundle Items
+                        </label>
+
+
+                        <div class="bundle-items">
+
+                            <input type="text"
+                                   id="item1"
+                                   placeholder="Item 1">
+
+                            <input type="text"
+                                   id="item2"
+                                   placeholder="Item 2">
+
+                            <input type="text"
+                                   id="item3"
+                                   placeholder="Item 3">
+
+                            <input type="text"
+                                   id="item4"
+                                   placeholder="Item 4">
+
+                            <input type="text"
+                                   id="item5"
+                                   placeholder="Item 5">
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+
+        <div class="modal-footer">
+
+            <button class="btn btn-light"
+                    onclick="closeModal('promotionModal')">
+                Cancel
+            </button>
+
+            <button class="btn btn-primary"
+                    onclick="savePromotion()">
+                Save Promotion
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     ADD USER MODAL
+====================================================== -->
+
+<div class="modal"
+     id="userModal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h3>
+                Add User
+            </h3>
+
+            <button class="close-btn"
+                    onclick="closeModal('userModal')">
+                &times;
+            </button>
+
+        </div>
+
+
+        <div class="modal-body">
+
+            <form id="userForm">
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+
+                        <label>
+                            Sales Man Code
+                        </label>
+
+                        <input type="text"
+                               id="userSMC"
+                               maxlength="5"
+                               required>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Staff Name
+                        </label>
+
+                        <input type="text"
+                               id="userName"
+                               required>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Outlet
+                        </label>
+
+                        <input type="text"
+                               id="userOutlet"
+                               required>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Role
+                        </label>
+
+                        <select id="userRole"
+                                required>
+
+                            <option value="staff">
+                                Staff
+                            </option>
+
+                            <option value="admin">
+                                Admin
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+
+        <div class="modal-footer">
+
+            <button class="btn btn-light"
+                    onclick="closeModal('userModal')">
+                Cancel
+            </button>
+
+            <button class="btn btn-primary"
+                    onclick="saveUser()">
+                Add User
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     STAFF PROMOTION BREAKDOWN MODAL
+     ADDED FOR MONTHLY SUMMARY
+====================================================== -->
+
+<div class="modal"
+     id="staffBreakdownModal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h3>
+                Promotion Breakdown
+            </h3>
+
+            <button class="close-btn"
+                    onclick="closeModal('staffBreakdownModal')">
+                &times;
+            </button>
+
+        </div>
+
+
+        <div class="modal-body">
+
+            <div class="detail-grid"
+                 style="margin-bottom:20px;">
+
+                <div class="detail-box">
+
+                    <label>
+                        Staff Name
+                    </label>
+
+                    <div id="breakdownStaffName">
+                        -
+                    </div>
+
+                </div>
+
+
+                <div class="detail-box">
+
+                    <label>
+                        Sales Man Code
+                    </label>
+
+                    <div id="breakdownStaffSMC">
+                        -
+                    </div>
+
+                </div>
+
+
+                <div class="detail-box">
+
+                    <label>
+                        Outlet
+                    </label>
+
+                    <div id="breakdownStaffOutlet">
+                        -
+                    </div>
+
+                </div>
+
+
+                <div class="detail-box">
+
+                    <label>
+                        Month
+                    </label>
+
+                    <div id="breakdownMonth">
+                        -
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table style="min-width:500px;">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Promotion
+                            </th>
+
+                            <th>
+                                Type
+                            </th>
+
+                            <th>
+                                Total Quantity
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="staffBreakdownBody">
+
+                        <tr>
+
+                            <td colspan="3"
+                                class="loading">
+                                Loading...
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <div class="modal-footer">
+
+            <button class="btn btn-light"
+                    onclick="closeModal('staffBreakdownModal')">
+                Close
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   GLOBAL DATA
+========================================================= */
+
+let allSubmissions = [];
+
+let allPromotions = [];
+
+let allUsers = [];
+
+let currentSubmission = null;
+
+let currentTab = "dashboard";
+
+let initialDataLoaded = false;
+
+
+/* =========================================================
+   API HELPER
+========================================================= */
+
+async function api(
+    action,
+    method = "GET",
+    data = null
+) {
+
+    let url =
+        "admin.php?action=" +
+        encodeURIComponent(action);
+
+    const options = {
+        method: method,
+        headers: {}
+    };
+
+
+    if (
+        method === "GET" &&
+        data
+    ) {
+
+        const params =
+            new URLSearchParams();
+
+
+        Object.entries(data)
+            .forEach(
+                ([key, value]) => {
+
+                    if (
+                        value !== undefined &&
+                        value !== null &&
+                        value !== ""
+                    ) {
+
+                        params.append(
+                            key,
+                            value
+                        );
+                    }
+
+                }
+            );
+
+
+        const query =
+            params.toString();
+
+
+        if (query) {
+
+            url +=
+                "&" +
+                query;
+        }
+
+
+    } else if (data) {
+
+        options.headers[
+            "Content-Type"
+        ] =
+            "application/json";
+
+
+        options.body =
+            JSON.stringify(data);
+    }
+
+
+    const response =
+        await fetch(
+            url,
+            options
+        );
+
+
+    const text =
+        await response.text();
+
+
+    let json;
+
+
+    try {
+
+        json =
+            JSON.parse(text);
+
+    } catch (error) {
+
+        throw new Error(
+            text ||
+            `HTTP ${response.status}`
+        );
+    }
+
+
+    if (
+        response.status === 401
+    ) {
+
+        window.location.href =
+            "index.html";
+
+        return null;
+    }
+
+
+    if (
+        !response.ok ||
+        json.success === false
+    ) {
+
+        throw new Error(
+            json.message ||
+            json.error ||
+            `HTTP ${response.status}`
+        );
+    }
+
+
+    return json;
+}
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function pick(
+    obj,
+    keys,
+    fallback = ""
+) {
+
+    if (!obj) {
+        return fallback;
+    }
+
+
+    for (
+        const key of keys
+    ) {
+
+        if (
+            obj[key] !== undefined &&
+            obj[key] !== null
+        ) {
+
+            return obj[key];
+        }
+    }
+
+
+    return fallback;
+}
+
+
+function escapeHtml(
+    value
+) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+
+        return "";
+    }
+
+
+    return String(value)
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+}
+
+
+function money(value) {
+
+    const numberValue =
+        parseFloat(value) || 0;
+
+
+    return "$" +
+        numberValue.toLocaleString(
+            "en-SG",
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }
+        );
+}
+
+
+function number(value) {
+
+    return parseFloat(value) || 0;
+}
+
+
+function getTodayString() {
+
+    const now =
+        new Date();
+
+
+    const year =
+        now.getFullYear();
+
+
+    const month =
+        String(
+            now.getMonth() + 1
+        ).padStart(2, "0");
+
+
+    const day =
+        String(
+            now.getDate()
+        ).padStart(2, "0");
+
+
+    return `${year}-${month}-${day}`;
+}
+
+
+/* =========================================================
+   PROMOTION STATUS
+========================================================= */
+
+function getPromotionStatus(
+    startDate,
+    endDate
+) {
+
+    const today =
+        new Date(
+            getTodayString() +
+            "T00:00:00"
+        );
+
+
+    if (startDate) {
+
+        const start =
+            new Date(
+                String(startDate)
+                    .substring(0, 10) +
+                "T00:00:00"
+            );
+
+
+        if (start > today) {
+
+            return "Upcoming";
+        }
+    }
+
+
+    if (endDate) {
+
+        const end =
+            new Date(
+                String(endDate)
+                    .substring(0, 10) +
+                "T00:00:00"
+            );
+
+
+        if (end < today) {
+
+            return "Expired";
+        }
+    }
+
+
+    return "Active";
+}
+
+
+function statusBadge(
+    status
+) {
+
+    const value =
+        String(status || "")
+            .toLowerCase();
+
+
+    let className =
+        "badge";
+
+
+    if (
+        value === "approved"
+    ) {
+
+        className +=
+            " badge-approved";
+
+    } else if (
+        value === "pending"
+    ) {
+
+        className +=
+            " badge-pending";
+
+    } else if (
+        value === "rejected"
+    ) {
+
+        className +=
+            " badge-rejected";
+    }
+
+
+    return `
+        <span class="${className}">
+            ${escapeHtml(status || "-")}
+        </span>
+    `;
+}
+
+
+function typeBadge(
+    type
+) {
+
+    const value =
+        String(type || "")
+            .toLowerCase();
+
+
+    if (
+        value === "outlet_bundle"
+    ) {
+
+        return `
+            <span class="badge badge-bundle">
+                Outlet Bundle
+            </span>
+        `;
+    }
+
+
+    return `
+        <span class="badge badge-individual">
+            Individual
+        </span>
+    `;
+}
+
+
+function promotionStatusBadge(
+    status
+) {
+
+    const value =
+        String(status || "")
+            .toLowerCase();
+
+
+    let className =
+        "badge ";
+
+
+    if (
+        value === "active"
+    ) {
+
+        className +=
+            "badge-active";
+
+    } else if (
+        value === "upcoming"
+    ) {
+
+        className +=
+            "badge-upcoming";
+
+    } else if (
+        value === "expired"
+    ) {
+
+        className +=
+            "badge-expired";
+    }
+
+
+    return `
+        <span class="${className}">
+            ${escapeHtml(status)}
+        </span>
+    `;
+}
+
+
+function formatDate(
+    value
+) {
+
+    if (!value) {
+        return "-";
+    }
+
+
+    return String(value)
+        .substring(0, 10);
+}
+
+
+function formatDateTime(
+    value
+) {
+
+    if (!value) {
+        return "-";
+    }
+
+
+    return String(value)
+        .replace(
+            "T",
+            " "
+        )
+        .substring(
+            0,
+            19
+        );
+}
+
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+
+function showMessage(
+    message,
+    type = "info"
+) {
+
+    const area =
+        document.getElementById(
+            "messageArea"
+        );
+
+
+    const className =
+        type === "success"
+            ? "message-success"
+            : type === "error"
+                ? "message-error"
+                : "message-info";
+
+
+    area.innerHTML = `
+        <div class="message ${className}">
+            ${escapeHtml(message)}
+        </div>
+    `;
+
+
+    setTimeout(
+        () => {
+            area.innerHTML = "";
+        },
+        4000
+    );
+}
+
+
+/* =========================================================
+   NORMALIZE SUBMISSION
+========================================================= */
+
+function normalizeSubmission(
+    row
+) {
+
+    const id =
+        pick(
+            row,
+            [
+                "incentive_id",
+                "id"
+            ],
+            ""
+        );
+
+
+    const smc =
+        pick(
+            row,
+            [
+                "SMC",
+                "smc",
+                "sales_man_code"
+            ],
+            ""
+        );
+
+
+    const staffName =
+        pick(
+            row,
+            [
+                "staff_name",
+                "staff",
+                "name"
+            ],
+            "-"
+        );
+
+
+    const promo =
+        pick(
+            row,
+            [
+                "promo",
+                "promotion",
+                "promo_name"
+            ],
+            "-"
+        );
+
+
+    const type =
+        pick(
+            row,
+            [
+                "type",
+                "promo_type",
+                "promotion_type"
+            ],
+            "individual"
+        );
+
+
+    const quantity =
+        number(
+            pick(
+                row,
+                [
+                    "quantity",
+                    "qty"
+                ],
+                1
+            )
+        );
+
+
+    const rate =
+        number(
+            pick(
+                row,
+                [
+                    "Rate",
+                    "rate"
+                ],
+                0
+            )
+        );
+
+
+    const amountValue =
+        pick(
+            row,
+            [
+                "amount",
+                "total",
+                "total_amount",
+                "incentive_amount"
+            ],
+            null
+        );
+
+
+    const amount =
+        amountValue !== null
+            ? number(amountValue)
+            : quantity * rate;
+
+
+    return {
+
+        raw: row,
+
+        id: id,
+
+        SMC: smc,
+
+        staff_name: staffName,
+
+        outlet:
+            pick(
+                row,
+                ["outlet"],
+                "-"
+            ),
+
+        promo: promo,
+
+        promo_id:
+            pick(
+                row,
+                [
+                    "promo_id",
+                    "promotion_id"
+                ],
+                ""
+            ),
+
+        type: type,
+
+        quantity: quantity,
+
+        rate: rate,
+
+        amount: amount,
+
+        status:
+            pick(
+                row,
+                ["status"],
+                "pending"
+            ),
+
+        proof:
+            pick(
+                row,
+                ["proof"],
+                ""
+            ),
+
+        rejection_reason:
+            pick(
+                row,
+                ["rejection_reason"],
+                ""
+            ),
+
+        submission_date:
+            pick(
+                row,
+                [
+                    "submission_date",
+                    "date",
+                    "created_at"
+                ],
+                ""
+            ),
+
+        approved_on:
+            pick(
+                row,
+                ["approved_on"],
+                ""
+            ),
+
+        approved_by:
+            pick(
+                row,
+                ["approved_by"],
+                ""
+            ),
+
+        rejected_on:
+            pick(
+                row,
+                ["rejected_on"],
+                ""
+            ),
+
+        rejected_by:
+            pick(
+                row,
+                ["rejected_by"],
+                ""
+            )
+    };
+}
+
+
+/* =========================================================
+   NORMALIZE PROMOTION
+========================================================= */
+
+function normalizePromotion(
+    row
+) {
+
+    const startDate =
+        pick(
+            row,
+            ["start_date"],
+            ""
+        );
+
+
+    const endDate =
+        pick(
+            row,
+            ["end_date"],
+            ""
+        );
+
+
+    return {
+
+        raw: row,
+
+        promo_id:
+            pick(
+                row,
+                [
+                    "promo_id",
+                    "id"
+                ],
+                ""
+            ),
+
+        promo:
+            pick(
+                row,
+                [
+                    "promo",
+                    "promotion",
+                    "promo_name"
+                ],
+                ""
+            ),
+
+        Rate:
+            number(
+                pick(
+                    row,
+                    [
+                        "Rate",
+                        "rate"
+                    ],
+                    0
+                )
+            ),
+
+        type:
+            pick(
+                row,
+                [
+                    "type",
+                    "promo_type"
+                ],
+                "individual"
+            ),
+
+        start_date:
+            startDate,
+
+        end_date:
+            endDate,
+
+        status:
+            getPromotionStatus(
+                startDate,
+                endDate
+            ),
+
+        item_1:
+            pick(
+                row,
+                ["item_1"],
+                ""
+            ),
+
+        item_2:
+            pick(
+                row,
+                ["item_2"],
+                ""
+            ),
+
+        item_3:
+            pick(
+                row,
+                ["item_3"],
+                ""
+            ),
+
+        item_4:
+            pick(
+                row,
+                ["item_4"],
+                ""
+            ),
+
+        item_5:
+            pick(
+                row,
+                ["item_5"],
+                ""
+            )
+    };
+}
+
+
+/* =========================================================
+   NORMALIZE USER
+========================================================= */
+
+function normalizeUser(
+    row
+) {
+
+    return {
+
+        SMC:
+            pick(
+                row,
+                [
+                    "sales_man_code",
+                    "SMC",
+                    "smc"
+                ],
+                ""
+            ),
+
+        staff_name:
+            pick(
+                row,
+                [
+                    "staff_name",
+                    "name"
+                ],
+                ""
+            ),
+
+        outlet:
+            pick(
+                row,
+                ["outlet"],
+                ""
+            ),
+
+        role:
+            pick(
+                row,
+                ["role"],
+                "staff"
+            )
+    };
+}
+
+
+/* =========================================================
+   EXTRACT ARRAY
+========================================================= */
+
+function extractArray(
+    json,
+    possibleKeys
+) {
+
+    if (
+        Array.isArray(json)
+    ) {
+
+        return json;
+    }
+
+
+    const data =
+        json &&
+        json.data !== undefined
+            ? json.data
+            : json;
+
+
+    if (
+        Array.isArray(data)
+    ) {
+
+        return data;
+    }
+
+
+    for (
+        const key of possibleKeys
+    ) {
+
+        if (
+            data &&
+            Array.isArray(
+                data[key]
+            )
+        ) {
+
+            return data[key];
+        }
+
+
+        if (
+            json &&
+            Array.isArray(
+                json[key]
+            )
+        ) {
+
+            return json[key];
+        }
+    }
+
+
+    return [];
+}
+
+
+/* =========================================================
+   INITIAL LOAD
+========================================================= */
+
+async function loadInitialData() {
+
+    if (
+        initialDataLoaded
+    ) {
+
+        return;
+    }
+
+
+    initialDataLoaded = true;
+
+
+    try {
+
+        const result =
+            await api(
+                "bootstrap"
+            );
+
+
+        const data =
+            result &&
+            result.data !== undefined
+                ? result.data
+                : result;
+
+
+        const submissions =
+            extractArray(
+                data,
+                [
+                    "submissions",
+                    "staff_incentives",
+                    "recent_submissions"
+                ]
+            );
+
+
+        const promotions =
+            extractArray(
+                data,
+                [
+                    "promotions",
+                    "incentives",
+                    "incentives_information"
+                ]
+            );
+
+
+        const users =
+            extractArray(
+                data,
+                [
+                    "users",
+                    "staff",
+                    "staff_details"
+                ]
+            );
+
+
+        allSubmissions =
+            submissions.map(
+                normalizeSubmission
+            );
+
+
+        allPromotions =
+            promotions.map(
+                normalizePromotion
+            );
+
+
+        allUsers =
+            users.map(
+                normalizeUser
+            );
+
+
+        renderEverything();
+
+
+        await loadAdminInfo();
+
+    } catch (error) {
+
+        console.error(error);
+
+        initialDataLoaded = false;
+
+        showMessage(
+            error.message ||
+            "Unable to load admin data.",
+            "error"
+        );
+    }
+}
+
+
+/* =========================================================
+   REFRESH ALL DATA
+========================================================= */
+
+async function refreshAllData() {
+
+    try {
+
+        const result =
+            await api(
+                "bootstrap"
+            );
+
+
+        const data =
+            result &&
+            result.data !== undefined
+                ? result.data
+                : result;
+
+
+        const submissions =
+            extractArray(
+                data,
+                [
+                    "submissions",
+                    "staff_incentives",
+                    "recent_submissions"
+                ]
+            );
+
+
+        const promotions =
+            extractArray(
+                data,
+                [
+                    "promotions",
+                    "incentives",
+                    "incentives_information"
+                ]
+            );
+
+
+        const users =
+            extractArray(
+                data,
+                [
+                    "users",
+                    "staff",
+                    "staff_details"
+                ]
+            );
+
+
+        allSubmissions =
+            submissions.map(
+                normalizeSubmission
+            );
+
+
+        allPromotions =
+            promotions.map(
+                normalizePromotion
+            );
+
+
+        allUsers =
+            users.map(
+                normalizeUser
+            );
+
+
+        renderEverything();
+
+    } catch (error) {
+
+        console.error(error);
+
+        showMessage(
+            error.message ||
+            "Unable to refresh data.",
+            "error"
+        );
+    }
+}
+
+
+/* =========================================================
+   RENDER EVERYTHING
+========================================================= */
+
+function renderEverything() {
+
+    renderDashboard();
+
+    renderRecentSubmissions();
+
+    renderStaffFilter();
+
+    renderOutletFilter();
+
+    applySubmissionFilters();
+
+    renderPromotions();
+
+    renderUsers();
+
+    renderMonthlySummary();
+
+    renderTop3();
+}
+
+
+/* =========================================================
+   DASHBOARD
+========================================================= */
+
+function calculateStats(
+    submissions = allSubmissions
+) {
+
+    let totalSubmissions =
+        submissions.length;
+
+    let pending = 0;
+
+    let individual = 0;
+
+    let bundle = 0;
+
+
+    submissions.forEach(
+        row => {
+
+            const status =
+                String(
+                    row.status || ""
+                ).toLowerCase();
+
+
+            if (
+                status === "pending"
+            ) {
+
+                pending++;
+            }
+
+
+            if (
+                status !== "approved"
+            ) {
+
+                return;
+            }
+
+
+            if (
+                String(row.type)
+                    .toLowerCase()
+                    === "outlet_bundle"
+            ) {
+
+                bundle +=
+                    row.amount;
+
+            } else {
+
+                individual +=
+                    row.amount;
+            }
+
+        }
+    );
+
+
+    return {
+
+        totalSubmissions,
+
+        pending,
+
+        individual,
+
+        bundle
+    };
+}
+
+
+function renderDashboard() {
+
+    const stats =
+        calculateStats();
+
+
+    document.getElementById(
+        "statTotalSubmissions"
+    ).textContent =
+        stats.totalSubmissions;
+
+
+    document.getElementById(
+        "statPending"
+    ).textContent =
+        stats.pending;
+
+
+    document.getElementById(
+        "statIndividual"
+    ).textContent =
+        money(
+            stats.individual
+        );
+
+
+    document.getElementById(
+        "statBundle"
+    ).textContent =
+        money(
+            stats.bundle
+        );
+}
+
+
+function renderRecentSubmissions() {
+
+    const body =
+        document.getElementById(
+            "recentSubmissionsBody"
+        );
+
+
+    const rows =
+        [...allSubmissions]
+            .sort(
+                (a, b) =>
+                    String(
+                        b.submission_date
+                    )
+                    .localeCompare(
+                        String(
+                            a.submission_date
+                        )
+                    )
+            )
+            .slice(
+                0,
+                10
+            );
+
+
+    if (!rows.length) {
+
+        body.innerHTML = `
+            <tr>
+                <td colspan="7"
+                    class="empty">
+                    No submissions found.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+
+    body.innerHTML =
+        rows
+            .map(
+                row => `
+
+                    <tr>
+
+                        <td>
+                            ${escapeHtml(row.id)}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(row.SMC)}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(row.staff_name)}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(row.outlet)}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(row.promo)}
+                        </td>
+
+                        <td>
+                            ${typeBadge(row.type)}
+                        </td>
+
+                        <td>
+                            ${money(row.amount)}
+                        </td>
+
+                        <td>
+                            ${statusBadge(row.status)}
+                        </td>
+
+                    </tr>
+
+                `
+            )
+            .join("");
+}
+
+
+/* =========================================================
+   STAFF FILTER
+========================================================= */
+
+function renderStaffFilter() {
+
+    const select =
+        document.getElementById(
+            "submissionStaffFilter"
+        );
+
+
+    const current =
+        select.value;
+
+
+    const unique =
+        new Map();
+
+
+    allUsers.forEach(
+        user => {
+
+            if (user.SMC) {
+
+                unique.set(
+                    user.SMC,
+                    user.staff_name
+                );
+            }
+
+        }
+    );
+
+
+    allSubmissions.forEach(
+        row => {
+
+            if (
+                row.SMC &&
+                !unique.has(row.SMC)
+            ) {
+
+                unique.set(
+                    row.SMC,
+                    row.staff_name
+                );
+            }
+
+        }
+    );
+
+
+    select.innerHTML =
+        `<option value="">
+            All Staff
+        </option>` +
+        Array.from(
+            unique.entries()
+        )
+        .sort(
+            (a, b) =>
+                String(a[1])
+                    .localeCompare(
+                        String(b[1])
+                    )
+        )
+        .map(
+            ([smc, name]) => `
+
+                <option value="${escapeHtml(smc)}">
+                    ${escapeHtml(name)}
+                    (${escapeHtml(smc)})
+                </option>
+
+            `
+        )
+        .join("");
+
+
+    if (
+        Array.from(
+            select.options
+        )
+        .some(
+            option =>
+                option.value ===
+                current
+        )
+    ) {
+
+        select.value =
+            current;
+    }
+}
+
+// outlet filter
+function renderOutletFilter() {
+
+    const outletFilter = document.getElementById("submissionoutletFilter");
+
+    const current = outletFilter.value;
+
+    const outlets = [
+        ...new Set(
+            allSubmissions
+                .map(item => String(item.outlet || "").trim())
+                .filter(outlet => outlet !== "")
+        )
+    ].sort((a, b) => a.localeCompare(b));
+
+    outletFilter.innerHTML = `<option value="">All Outlets</option>`;
+
+    outlets.forEach(outlet => {
+        const option = document.createElement("option");
+        option.value = outlet;
+        option.textContent = outlet;
+        outletFilter.appendChild(option);
+    });
+
+    if (
+        Array.from(outletFilter.options)
+            .some(option => option.value === current)
+    ) {
+        outletFilter.value = current;
+    }
+}
+
+/* =========================================================
+   SUBMISSION FILTERS
+========================================================= */
+
+function getFilteredSubmissions() {
+
+    const outlet = document.getElementById("submissionoutletFilter").value.trim().toLowerCase();
+
+    const staff =
+        document.getElementById(
+            "submissionStaffFilter"
+        )
+        .value
+        .toLowerCase();
+
+
+    const status =
+        document.getElementById(
+            "submissionStatusFilter"
+        )
+        .value
+        .toLowerCase();
+
+
+    const type =
+        document.getElementById(
+            "submissionTypeFilter"
+        )
+        .value
+        .toLowerCase();
+
+
+    const date =
+        document.getElementById(
+            "submissionDateFilter"
+        )
+        .value;
+
+
+    const search =
+        document.getElementById(
+            "submissionSearch"
+        )
+        .value
+        .trim()
+        .toLowerCase();
+
+
+    return allSubmissions.filter(
+        row => {
+
+            if (
+                staff &&
+                String(row.SMC)
+                    .toLowerCase()
+                    !== staff
+            ) {
+
+                return false;
+            }
+
+
+            if (
+                outlet &&
+                String(row.outlet || "")
+                    .trim()
+                    .toLowerCase()
+                    !== outlet
+            ) {
+
+                return false;
+            }
+
+
+            if (
+                status &&
+                String(row.status)
+                    .toLowerCase()
+                    !== status
+            ) {
+
+                return false;
+            }
+
+
+            if (
+                type &&
+                String(row.type)
+                    .toLowerCase()
+                    !== type
+            ) {
+
+                return false;
+            }
+
+
+            if (date) {
+
+                const rowDate =
+                    String(
+                        row.submission_date ||
+                        ""
+                    )
+                    .substring(
+                        0,
+                        10
+                    );
+
+
+                if (
+                    rowDate !== date
+                ) {
+
+                    return false;
+                }
+            }
+
+
+            if (search) {
+
+                const searchable = [
+
+                    row.id,
+                    row.SMC,
+                    row.staff_name,
+                    row.outlet,
+                    row.promo,
+                    row.type,
+                    row.status
+
+                ]
+                    .join(" ")
+                    .toLowerCase();
+
+
+                if (
+                    !searchable.includes(
+                        search
+                    )
+                ) {
+
+                    return false;
+                }
+            }
+
+
+            return true;
+        }
+    );
+}
+
+
+function applySubmissionFilters() {
+
+    const body =
+        document.getElementById(
+            "submissionsBody"
+        );
+
+
+    const rows =
+        getFilteredSubmissions();
+
+
+    if (!rows.length) {
+
+        body.innerHTML = `
+            <tr>
+                <td colspan="10"
+                    class="empty">
+                    No submissions found.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+
+    body.innerHTML =
+        rows
+            .map(
+                row => `
+
+                    <tr>
+
+                        <td>
+                            ${escapeHtml(row.id)}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(row.SMC)}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(row.staff_name)}
+                        </td>
+
+                         <td>
+                            ${escapeHtml(row.outlet)}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(row.promo)}
+                        </td>
+
+                        <td>
+                            ${typeBadge(row.type)}
+                        </td>
+
+                        <td>
+                            ${row.quantity}
+                        </td>
+
+                        <td>
+                            ${money(row.amount)}
+                        </td>
+
+                        <td>
+                            ${statusBadge(row.status)}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                formatDateTime(
+                                    row.submission_date
+                                )
+                            )}
+                        </td>
+
+                        <td>
+
+                            <div class="action-buttons">
+
+                                <button
+                                    class="btn btn-primary btn-small"
+                                    onclick="viewSubmission('${escapeHtml(row.id)}')">
+                                    View
+                                </button>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                `
+            )
+            .join("");
+}
+
+
+function clearSubmissionFilters() {
+
+    document.getElementById(
+        "submissionStaffFilter"
+    ).value = "";
+
+
+    document.getElementById(
+        "submissionStatusFilter"
+    ).value = "";
+
+
+    document.getElementById(
+        "submissionTypeFilter"
+    ).value = "";
+
+
+    document.getElementById(
+        "submissionoutletFilter"
+    ).value = "";
+
+
+    document.getElementById(
+        "submissionDateFilter"
+    ).value = "";
+
+
+    document.getElementById(
+        "submissionSearch"
+    ).value = "";
+
+
+    applySubmissionFilters();
+}
+
+
+/* =========================================================
+   SUBMISSION MODAL
+========================================================= */
+
+async function viewSubmission(
+    id
+) {
+
+    const modal =
+        document.getElementById(
+            "submissionModal"
+        );
+
+
+    const body =
+        document.getElementById(
+            "submissionModalBody"
+        );
+
+
+    modal.classList.add(
+        "show"
+    );
+
+
+    body.innerHTML = `
+        <div class="loading">
+            Loading submission...
+        </div>
+    `;
+
+
+    try {
+
+        const result =
+            await api(
+                "get_submission",
+                "GET",
+                {
+                    incentive_id: id,
+                    id: id
+                }
+            );
+
+
+        const raw =
+            result &&
+            result.data !== undefined
+                ? result.data
+                : result;
+
+
+        const row =
+            normalizeSubmission(
+                raw.submission ||
+                raw.incentive ||
+                raw
+            );
+
+
+        currentSubmission =
+            row;
+
+
+        renderSubmissionModal(
+            row
+        );
+
+    } catch (error) {
+
+        const local =
+            allSubmissions.find(
+                row =>
+                    String(row.id) ===
+                    String(id)
+            );
+
+
+        if (local) {
+
+            currentSubmission =
+                local;
+
+
+            renderSubmissionModal(
+                local
+            );
+
+        } else {
+
+            body.innerHTML = `
+                <div class="message message-error">
+                    ${escapeHtml(error.message)}
+                </div>
+            `;
+        }
+    }
+}
+
+
+function renderSubmissionModal(
+    row
+) {
+
+    const body =
+        document.getElementById(
+            "submissionModalBody"
+        );
+
+
+    let proofHtml =
+        "-";
+
+
+    if (row.proof) {
+
+        const proof =
+            String(row.proof);
+
+
+        if (
+            proof.startsWith("http") ||
+            proof.startsWith("/") ||
+            proof.startsWith("uploads")
+        ) {
+
+            proofHtml = `
+                <a href="${escapeHtml(proof)}"
+                   target="_blank">
+                    View Proof
+                </a>
+            `;
+
+        } else {
+
+            proofHtml =
+                escapeHtml(proof);
+        }
+    }
+
+
+    let statusDetails =
+        "";
+
+
+    if (
+        String(row.status)
+            .toLowerCase()
+            === "rejected"
+        &&
+        row.rejection_reason
+    ) {
+
+        statusDetails = `
+
+            <div class="detail-box"
+                 style="grid-column:1/-1;">
+
+                <label>
+                    Rejection Reason
+                </label>
+
+                <div>
+                    ${escapeHtml(
+                        row.rejection_reason
+                    )}
+                </div>
+
+            </div>
+
+        `;
+    }
+
+
+    body.innerHTML = `
+
+        <div class="detail-grid">
+
+            <div class="detail-box">
+                <label>
+                    Submission ID
+                </label>
+
+                <div>
+                    ${escapeHtml(row.id)}
+                </div>
+            </div>
+
+
+            <div class="detail-box">
+                <label>
+                    Status
+                </label>
+
+                <div>
+                    ${statusBadge(row.status)}
+                </div>
+            </div>
+
+
+            <div class="detail-box">
+                <label>
+                    Sales Man Code
+                </label>
+
+                <div>
+                    ${escapeHtml(row.SMC)}
+                </div>
+            </div>
+
+
+            <div class="detail-box">
+                <label>
+                    Staff Name
+                </label>
+
+                <div>
+                    ${escapeHtml(row.staff_name)}
+                </div>
+            </div>
+
+
+            <div class="detail-box">
+                <label>
+                    Outlet
+                </label>
+
+                <div>
+                    ${escapeHtml(row.outlet)}
+                </div>
+            </div>
+
+
+            <div class="detail-box">
+                <label>
+                    Promotion
+                </label>
+
+                <div>
+                    ${escapeHtml(row.promo)}
+                </div>
+            </div>
+
+
+            <div class="detail-box">
+                <label>
+                    Promotion Type
+                </label>
+
+                <div>
+                    ${typeBadge(row.type)}
+                </div>
+            </div>
+
+
+            <div class="detail-box">
+                <label>
+                    Quantity
+                </label>
+
+                <div>
+                    ${row.quantity}
+                </div>
+            </div>
+
+
+            <div class="detail-box">
+                <label>
+                    Rate
+                </label>
+
+                <div>
+                    ${money(row.rate)}
+                </div>
+            </div>
+
+
+            <div class="detail-box">
+                <label>
+                    Amount
+                </label>
+
+                <div>
+                    ${money(row.amount)}
+                </div>
+            </div>
+
+
+            <div class="detail-box">
+                <label>
+                    Submission Date
+                </label>
+
+                <div>
+                    ${escapeHtml(
+                        formatDateTime(
+                            row.submission_date
+                        )
+                    )}
+                </div>
+            </div>
+
+
+            <div class="detail-box">
+                <label>
+                    Proof
+                </label>
+
+                <div>
+                    ${proofHtml}
+                </div>
+            </div>
+
+
+            ${statusDetails}
+
+
+            <div class="detail-box">
+                <label>
+                    Approved On
+                </label>
+
+                <div>
+                    ${escapeHtml(
+                        formatDateTime(
+                            row.approved_on
+                        )
+                    )}
+                </div>
+            </div>
+
+
+            <div class="detail-box">
+                <label>
+                    Approved By
+                </label>
+
+                <div>
+                    ${escapeHtml(
+                        row.approved_by
+                    )}
+                </div>
+            </div>
+
+        </div>
+
+    `;
+
+
+    document.getElementById(
+        "approveSubmissionBtn"
+    ).style.display =
+        String(row.status)
+            .toLowerCase()
+            === "pending"
+            ? ""
+            : "none";
+
+
+    document.getElementById(
+        "rejectSubmissionBtn"
+    ).style.display =
+        String(row.status)
+            .toLowerCase()
+            === "pending"
+            ? ""
+            : "none";
+
+
+    document.getElementById(
+        "editSubmissionBtn"
+    ).onclick =
+        () =>
+            editSubmissionPromotion(
+                row.id
+            );
+
+
+    document.getElementById(
+        "approveSubmissionBtn"
+    ).onclick =
+        () =>
+            approveSubmission(
+                row.id
+            );
+
+
+    document.getElementById(
+        "rejectSubmissionBtn"
+    ).onclick =
+        () =>
+            rejectSubmission(
+                row.id
+            );
+}
+
+
+/* =========================================================
+   APPROVE
+========================================================= */
+
+async function approveSubmission(
+    id
+) {
+
+    if (
+        !confirm(
+            "Approve this submission?"
+        )
+    ) {
+
+        return;
+    }
+
+
+    try {
+
+        await api(
+            "approve",
+            "POST",
+            {
+                incentive_id: id,
+                id: id
+            }
+        );
+
+
+        closeModal(
+            "submissionModal"
+        );
+
+
+        showMessage(
+            "Submission approved successfully.",
+            "success"
+        );
+
+
+        await refreshAllData();
+
+    } catch (error) {
+
+        showMessage(
+            error.message,
+            "error"
+        );
+    }
+}
+
+
+/* =========================================================
+   REJECT
+========================================================= */
+
+async function rejectSubmission(
+    id
+) {
+
+    const reason =
+        prompt(
+            "Enter rejection reason:"
+        );
+
+
+    if (
+        reason === null
+    ) {
+
+        return;
+    }
+
+
+    if (
+        reason.trim() === ""
+    ) {
+
+        showMessage(
+            "Rejection reason is required.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    try {
+
+        await api(
+            "reject",
+            "POST",
+            {
+                incentive_id: id,
+                id: id,
+                rejection_reason:
+                    reason.trim(),
+                reason:
+                    reason.trim()
+            }
+        );
+
+
+        closeModal(
+            "submissionModal"
+        );
+
+
+        showMessage(
+            "Submission rejected successfully.",
+            "success"
+        );
+
+
+        await refreshAllData();
+
+    } catch (error) {
+
+        showMessage(
+            error.message,
+            "error"
+        );
+    }
+}
+
+
+/* =========================================================
+   EDIT SUBMISSION PROMOTION
+========================================================= */
+
+async function editSubmissionPromotion(
+    incentiveId
+) {
+
+    const row =
+        allSubmissions.find(
+            item =>
+                String(item.id) ===
+                String(incentiveId)
+        );
+
+
+    if (!row) {
+        return;
+    }
+
+
+    const currentPromoId =
+        row.promo_id;
+
+
+    const selected =
+        prompt(
+            "Enter the Promotion ID to change to:\n\n" +
+            allPromotions
+                .map(
+                    promo =>
+                        `${promo.promo_id} - ${promo.promo}`
+                )
+                .join("\n"),
+            currentPromoId || ""
+        );
+
+
+    if (
+        selected === null
+    ) {
+
+        return;
+    }
+
+
+    if (
+        !allPromotions.some(
+            promo =>
+                String(
+                    promo.promo_id
+                ) ===
+                String(selected)
+        )
+    ) {
+
+        showMessage(
+            "Invalid promotion ID.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    try {
+
+        await api(
+            "edit_submission",
+            "POST",
+            {
+                incentive_id:
+                    incentiveId,
+
+                id:
+                    incentiveId,
+
+                promo_id:
+                    selected,
+
+                promotion_id:
+                    selected
+            }
+        );
+
+
+        closeModal(
+            "submissionModal"
+        );
+
+
+        showMessage(
+            "Submission promotion updated successfully.",
+            "success"
+        );
+
+
+        await refreshAllData();
+
+    } catch (error) {
+
+        showMessage(
+            error.message,
+            "error"
+        );
+    }
+}
+
+
+/* =========================================================
+   DELETE SUBMISSION
+========================================================= */
+
+async function deleteSubmission(
+    id
+) {
+
+    if (
+        !confirm(
+            "Delete this submission?"
+        )
+    ) {
+
+        return;
+    }
+
+
+    try {
+
+        await api(
+            "delete_submission",
+            "POST",
+            {
+                incentive_id: id,
+                id: id
+            }
+        );
+
+
+        showMessage(
+            "Submission deleted successfully.",
+            "success"
+        );
+
+
+        await refreshAllData();
+
+    } catch (error) {
+
+        showMessage(
+            error.message,
+            "error"
+        );
+    }
+}
+
+
+/* =========================================================
+   PROMOTIONS
+========================================================= */
+
+function renderPromotions() {
+
+    const body =
+        document.getElementById(
+            "promotionsBody"
+        );
+
+
+    allPromotions =
+        allPromotions.map(
+            promo => {
+
+                promo.status =
+                    getPromotionStatus(
+                        promo.start_date,
+                        promo.end_date
+                    );
+
+
+                return promo;
+            }
+        );
+
+
+    if (
+        !allPromotions.length
+    ) {
+
+        body.innerHTML = `
+            <tr>
+                <td colspan="9"
+                    class="empty">
+                    No promotions found.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+
+    body.innerHTML =
+        allPromotions
+            .map(
+                promo => {
+
+                    const items = [
+
+                        promo.item_1,
+                        promo.item_2,
+                        promo.item_3,
+                        promo.item_4,
+                        promo.item_5
+
+                    ].filter(
+                        item =>
+                            item !== null &&
+                            item !== undefined &&
+                            String(item).trim() !== ""
+                    );
+
+
+                    const itemsHtml =
+                        promo.type === "outlet_bundle"
+                            ? (
+                                items.length
+                                    ? `
+                                        <ul class="item-list">
+                                            ${items
+                                                .map(
+                                                    item =>
+                                                        `<li>${escapeHtml(item)}</li>`
+                                                )
+                                                .join("")}
+                                        </ul>
+                                    `
+                                    : "-"
+                            )
+                            : "-";
+
+
+                    return `
+
+                        <tr>
+
+                            <td>
+                                ${escapeHtml(
+                                    promo.promo_id
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    promo.promo
+                                )}
+                            </td>
+
+                            <td>
+                                ${money(
+                                    promo.Rate
+                                )}
+                            </td>
+
+                            <td>
+                                ${typeBadge(
+                                    promo.type
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    formatDate(
+                                        promo.start_date
+                                    )
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    formatDate(
+                                        promo.end_date
+                                    )
+                                )}
+                            </td>
+
+                            <td>
+                                ${promotionStatusBadge(
+                                    promo.status
+                                )}
+                            </td>
+
+                            <td>
+                                ${itemsHtml}
+                            </td>
+
+                            <td>
+
+                                <div class="action-buttons">
+
+                                    <button
+                                        class="btn btn-warning btn-small"
+                                        onclick="openEditPromotionModal('${escapeHtml(promo.promo_id)}')">
+                                        Edit
+                                    </button>
+
+                                    <button
+                                        class="btn btn-danger btn-small"
+                                        onclick="deletePromotion('${escapeHtml(promo.promo_id)}')">
+                                        Delete
+                                    </button>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                    `;
+                }
+            )
+            .join("");
+}
+
+
+/* =========================================================
+   PROMOTION TYPE UI
+========================================================= */
+
+function updateBundleFields() {
+
+    const type =
+        document.getElementById(
+            "promotionType"
+        ).value;
+
+
+    const bundleFields =
+        document.getElementById(
+            "bundleFields"
+        );
+
+
+    if (
+        type === "outlet_bundle"
+    ) {
+
+        bundleFields.classList.remove(
+            "hidden"
+        );
+
+    } else {
+
+        bundleFields.classList.add(
+            "hidden"
+        );
+    }
+}
+
+
+document.getElementById(
+    "promotionType"
+).addEventListener(
+    "change",
+    updateBundleFields
+);
+
+
+/* =========================================================
+   ADD PROMOTION
+========================================================= */
+
+function openAddPromotionModal() {
+
+    document.getElementById(
+        "promotionModalTitle"
+    ).textContent =
+        "Add Promotion";
+
+
+    document.getElementById(
+        "promotionId"
+    ).value = "";
+
+
+    document.getElementById(
+        "promotionName"
+    ).value = "";
+
+
+    document.getElementById(
+        "promotionRate"
+    ).value = "";
+
+
+    document.getElementById(
+        "promotionType"
+    ).value =
+        "individual";
+
+
+    document.getElementById(
+        "promotionStartDate"
+    ).value = "";
+
+
+    document.getElementById(
+        "promotionEndDate"
+    ).value = "";
+
+
+    document.getElementById(
+        "item1"
+    ).value = "";
+
+
+    document.getElementById(
+        "item2"
+    ).value = "";
+
+
+    document.getElementById(
+        "item3"
+    ).value = "";
+
+
+    document.getElementById(
+        "item4"
+    ).value = "";
+
+
+    document.getElementById(
+        "item5"
+    ).value = "";
+
+
+    updateBundleFields();
+
+
+    document.getElementById(
+        "promotionModal"
+    ).classList.add(
+        "show"
+    );
+}
+
+
+/* =========================================================
+   EDIT PROMOTION
+========================================================= */
+
+function openEditPromotionModal(
+    promoId
+) {
+
+    const promo =
+        allPromotions.find(
+            item =>
+                String(
+                    item.promo_id
+                ) ===
+                String(promoId)
+        );
+
+
+    if (!promo) {
+
+        showMessage(
+            "Promotion not found.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    document.getElementById(
+        "promotionModalTitle"
+    ).textContent =
+        "Edit Promotion";
+
+
+    document.getElementById(
+        "promotionId"
+    ).value =
+        promo.promo_id;
+
+
+    document.getElementById(
+        "promotionName"
+    ).value =
+        promo.promo;
+
+
+    document.getElementById(
+        "promotionRate"
+    ).value =
+        promo.Rate;
+
+
+    document.getElementById(
+        "promotionType"
+    ).value =
+        promo.type;
+
+
+    document.getElementById(
+        "promotionStartDate"
+    ).value =
+        formatDate(
+            promo.start_date
+        ) === "-"
+            ? ""
+            : formatDate(
+                promo.start_date
+            );
+
+
+    document.getElementById(
+        "promotionEndDate"
+    ).value =
+        formatDate(
+            promo.end_date
+        ) === "-"
+            ? ""
+            : formatDate(
+                promo.end_date
+            );
+
+
+    document.getElementById(
+        "item1"
+    ).value =
+        promo.item_1 || "";
+
+
+    document.getElementById(
+        "item2"
+    ).value =
+        promo.item_2 || "";
+
+
+    document.getElementById(
+        "item3"
+    ).value =
+        promo.item_3 || "";
+
+
+    document.getElementById(
+        "item4"
+    ).value =
+        promo.item_4 || "";
+
+
+    document.getElementById(
+        "item5"
+    ).value =
+        promo.item_5 || "";
+
+
+    updateBundleFields();
+
+
+    document.getElementById(
+        "promotionModal"
+    ).classList.add(
+        "show"
+    );
+}
+
+
+/* =========================================================
+   SAVE PROMOTION
+========================================================= */
+
+async function savePromotion() {
+
+    const id =
+        document.getElementById(
+            "promotionId"
+        ).value;
+
+
+    const promo =
+        document.getElementById(
+            "promotionName"
+        ).value.trim();
+
+
+    const rate =
+        document.getElementById(
+            "promotionRate"
+        ).value;
+
+
+    const type =
+        document.getElementById(
+            "promotionType"
+        ).value;
+
+
+    const startDate =
+        document.getElementById(
+            "promotionStartDate"
+        ).value;
+
+
+    const endDate =
+        document.getElementById(
+            "promotionEndDate"
+        ).value;
+
+
+    if (!promo) {
+
+        showMessage(
+            "Promotion name is required.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    if (rate === "") {
+
+        showMessage(
+            "Rate is required.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const data = {
+
+        promo_id:
+            id || undefined,
+
+        id:
+            id || undefined,
+
+        promo:
+            promo,
+
+        promotion:
+            promo,
+
+        Rate:
+            rate,
+
+        rate:
+            rate,
+
+        type:
+            type,
+
+        start_date:
+            startDate || null,
+
+        end_date:
+            endDate || null,
+
+        item_1:
+            document.getElementById(
+                "item1"
+            ).value.trim(),
+
+        item_2:
+            document.getElementById(
+                "item2"
+            ).value.trim(),
+
+        item_3:
+            document.getElementById(
+                "item3"
+            ).value.trim(),
+
+        item_4:
+            document.getElementById(
+                "item4"
+            ).value.trim(),
+
+        item_5:
+            document.getElementById(
+                "item5"
+            ).value.trim()
+    };
+
+
+    try {
+
+        if (id) {
+
+            await api(
+                "edit_promotion",
+                "POST",
+                data
+            );
+
+
+            showMessage(
+                "Promotion updated successfully.",
+                "success"
+            );
+
+        } else {
+
+            await api(
+                "add_promotion",
+                "POST",
+                data
+            );
+
+
+            showMessage(
+                "Promotion added successfully.",
+                "success"
+            );
+        }
+
+
+        closeModal(
+            "promotionModal"
+        );
+
+
+        await refreshAllData();
+
+    } catch (error) {
+
+        showMessage(
+            error.message,
+            "error"
+        );
+    }
+}
+
+
+/* =========================================================
+   DELETE PROMOTION
+========================================================= */
+
+async function deletePromotion(
+    promoId
+) {
+
+    if (
+        !confirm(
+            "Delete this promotion?"
+        )
+    ) {
+
+        return;
+    }
+
+
+    try {
+
+        await api(
+            "delete_promotion",
+            "POST",
+            {
+                promo_id: promoId,
+                id: promoId
+            }
+        );
+
+
+        showMessage(
+            "Promotion deleted successfully.",
+            "success"
+        );
+
+
+        await refreshAllData();
+
+    } catch (error) {
+
+        showMessage(
+            error.message,
+            "error"
+        );
+    }
+}
+
+
+/* =========================================================
+   USERS
+========================================================= */
+
+function renderUsers() {
+
+    const body =
+        document.getElementById(
+            "usersBody"
+        );
+
+
+    if (
+        !allUsers.length
+    ) {
+
+        body.innerHTML = `
+            <tr>
+                <td colspan="5"
+                    class="empty">
+                    No users found.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+
+    body.innerHTML =
+        allUsers
+            .map(
+                user => `
+
+                    <tr>
+
+                        <td>
+                            ${escapeHtml(
+                                user.SMC
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                user.staff_name
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                user.outlet
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                user.role
+                            )}
+                        </td>
+
+                        <td>
+
+                            <button
+                                class="btn btn-danger btn-small"
+                                onclick="deleteUser('${escapeHtml(user.SMC)}')">
+                                Delete
+                            </button>
+
+                        </td>
+
+                    </tr>
+
+                `
+            )
+            .join("");
+}
+
+
+/* =========================================================
+   ADD USER
+========================================================= */
+
+function openAddUserModal() {
+
+    document.getElementById(
+        "userSMC"
+    ).value = "";
+
+
+    document.getElementById(
+        "userName"
+    ).value = "";
+
+
+    document.getElementById(
+        "userOutlet"
+    ).value = "";
+
+
+    document.getElementById(
+        "userRole"
+    ).value =
+        "staff";
+
+
+    document.getElementById(
+        "userModal"
+    ).classList.add(
+        "show"
+    );
+}
+
+
+async function saveUser() {
+
+    const smc =
+        document.getElementById(
+            "userSMC"
+        ).value.trim();
+
+
+    const name =
+        document.getElementById(
+            "userName"
+        ).value.trim();
+
+
+    const outlet =
+        document.getElementById(
+            "userOutlet"
+        ).value.trim();
+
+
+    const role =
+        document.getElementById(
+            "userRole"
+        ).value;
+
+
+    if (
+        !smc ||
+        !name ||
+        !outlet
+    ) {
+
+        showMessage(
+            "Please fill in all user fields.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    try {
+
+        await api(
+            "add_user",
+            "POST",
+            {
+                sales_man_code:
+                    smc,
+
+                SMC:
+                    smc,
+
+                staff_name:
+                    name,
+
+                outlet:
+                    outlet,
+
+                role:
+                    role
+            }
+        );
+
+
+        closeModal(
+            "userModal"
+        );
+
+
+        showMessage(
+            "User added successfully.",
+            "success"
+        );
+
+
+        await refreshAllData();
+
+    } catch (error) {
+
+        showMessage(
+            error.message,
+            "error"
+        );
+    }
+}
+
+
+/* =========================================================
+   DELETE USER
+========================================================= */
+
+async function deleteUser(
+    smc
+) {
+
+    if (
+        !confirm(
+            `Delete user ${smc}?`
+        )
+    ) {
+
+        return;
+    }
+
+
+    try {
+
+        await api(
+            "delete_user",
+            "POST",
+            {
+                sales_man_code:
+                    smc,
+
+                SMC:
+                    smc
+            }
+        );
+
+
+        showMessage(
+            "User deleted successfully.",
+            "success"
+        );
+
+
+        await refreshAllData();
+
+    } catch (error) {
+
+        showMessage(
+            error.message,
+            "error"
+        );
+    }
+}
+
+
+/* =========================================================
+   MONTHLY SUMMARY
+========================================================= */
+
+function getSelectedMonth(
+    elementId
+) {
+
+    const value =
+        document.getElementById(
+            elementId
+        ).value;
+
+
+    if (value) {
+        return value;
+    }
+
+
+    const now =
+        new Date();
+
+
+    return `${now.getFullYear()}-${String(
+        now.getMonth() + 1
+    ).padStart(2, "0")}`;
+}
+
+
+function getMonthRows(
+    month
+) {
+
+    return allSubmissions.filter(
+        row => {
+
+            if (
+                String(row.status)
+                    .toLowerCase()
+                    !== "approved"
+            ) {
+
+                return false;
+            }
+
+
+            const date =
+                String(
+                    row.submission_date ||
+                    ""
+                )
+                .substring(
+                    0,
+                    7
+                );
+
+
+            return date === month;
+        }
+    );
+}
+
+
+/* =========================================================
+   MONTHLY SUMMARY RENDER
+========================================================= */
+
+function renderMonthlySummary() {
+
+    const month =
+        getSelectedMonth(
+            "monthlyFilter"
+        );
+
+
+    const rows =
+        getMonthRows(
+            month
+        );
+
+
+    let individualTotal =
+        0;
+
+
+    let bundleTotal =
+        0;
+
+
+    rows.forEach(
+        row => {
+
+            if (
+                String(row.type)
+                    .toLowerCase()
+                    === "outlet_bundle"
+            ) {
+
+                bundleTotal +=
+                    row.amount;
+
+            } else {
+
+                individualTotal +=
+                    row.amount;
+            }
+
+        }
+    );
+
+
+    document.getElementById(
+        "monthlyIndividual"
+    ).textContent =
+        money(
+            individualTotal
+        );
+
+
+    document.getElementById(
+        "monthlyBundle"
+    ).textContent =
+        money(
+            bundleTotal
+        );
+
+
+    document.getElementById(
+        "monthlyTotal"
+    ).textContent =
+        money(
+            individualTotal +
+            bundleTotal
+        );
+
+
+    document.getElementById(
+        "monthlyApprovedCount"
+    ).textContent =
+        rows.length;
+
+
+    const staffMap =
+        new Map();
+
+
+    allUsers.forEach(
+        user => {
+
+            staffMap.set(
+                user.SMC,
+                {
+                    SMC:
+                        user.SMC,
+
+                    staff_name:
+                        user.staff_name,
+
+                    outlet:
+                        user.outlet,
+
+                    individual:
+                        0,
+
+                    bundle:
+                        0
+                }
+            );
+
+        }
+    );
+
+
+    rows.forEach(
+        row => {
+
+            if (
+                !staffMap.has(
+                    row.SMC
+                )
+            ) {
+
+                staffMap.set(
+                    row.SMC,
+                    {
+                        SMC:
+                            row.SMC,
+
+                        staff_name:
+                            row.staff_name,
+
+                        outlet:
+                            row.outlet,
+
+                        individual:
+                            0,
+
+                        bundle:
+                            0
+                    }
+                );
+            }
+
+
+            const staff =
+                staffMap.get(
+                    row.SMC
+                );
+
+
+            if (
+                String(row.type)
+                    .toLowerCase()
+                    === "outlet_bundle"
+            ) {
+
+                staff.bundle +=
+                    row.amount;
+
+            } else {
+
+                staff.individual +=
+                    row.amount;
+            }
+
+        }
+    );
+
+
+    const rowsForTable =
+        Array.from(
+            staffMap.values()
+        )
+        .filter(
+            staff =>
+                staff.individual > 0 ||
+                staff.bundle > 0
+        )
+        .sort(
+            (a, b) =>
+                b.individual -
+                a.individual
+        );
+
+
+    const body =
+        document.getElementById(
+            "monthlyBody"
+        );
+
+
+    if (
+        !rowsForTable.length
+    ) {
+
+        body.innerHTML = `
+            <tr>
+                <td colspan="8"
+                    class="empty">
+                    No approved submissions for
+                    ${escapeHtml(month)}.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+
+    body.innerHTML =
+        rowsForTable
+            .map(
+                (staff, index) => {
+
+                    const total =
+                        staff.individual +
+                        staff.bundle;
+
+
+                    return `
+
+                        <tr>
+
+                            <td>
+                                ${index + 1}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    staff.SMC
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    staff.staff_name
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    staff.outlet
+                                )}
+                            </td>
+
+                            <td>
+                                ${money(
+                                    staff.individual
+                                )}
+                            </td>
+
+                            <td>
+                                ${money(
+                                    staff.bundle
+                                )}
+                            </td>
+
+                            <td>
+                                <strong>
+                                    ${money(total)}
+                                </strong>
+                            </td>
+
+                            <td>
+
+                                <button
+                                    class="btn btn-primary btn-small"
+                                    onclick="viewStaffBreakdown('${escapeHtml(staff.SMC)}')">
+                                    View
+                                </button>
+
+                            </td>
+
+                        </tr>
+
+                    `;
+                }
+            )
+            .join("");
+}
+
+
+/* =========================================================
+   STAFF PROMOTION BREAKDOWN
+   TOTAL NUMBER FOR EACH PROMOTION
+========================================================= */
+
+function viewStaffBreakdown(
+    smc
+) {
+
+    const month =
+        getSelectedMonth(
+            "monthlyFilter"
+        );
+
+
+    const staff =
+        allUsers.find(
+            user =>
+                String(user.SMC) ===
+                String(smc)
+        );
+
+
+    const staffRows =
+        getMonthRows(
+            month
+        )
+        .filter(
+            row =>
+                String(row.SMC) ===
+                String(smc)
+        );
+
+
+    const staffName =
+        staff
+            ? staff.staff_name
+            : (
+                staffRows.length
+                    ? staffRows[0].staff_name
+                    : "-"
+            );
+
+
+    const staffOutlet =
+        staff
+            ? staff.outlet
+            : (
+                staffRows.length
+                    ? staffRows[0].outlet
+                    : "-"
+            );
+
+
+    document.getElementById(
+        "breakdownStaffName"
+    ).textContent =
+        staffName;
+
+
+    document.getElementById(
+        "breakdownStaffSMC"
+    ).textContent =
+        smc;
+
+
+    document.getElementById(
+        "breakdownStaffOutlet"
+    ).textContent =
+        staffOutlet;
+
+
+    document.getElementById(
+        "breakdownMonth"
+    ).textContent =
+        month;
+
+
+    const promotionMap =
+        new Map();
+
+
+    /*
+     * Count quantity for each promotion.
+     * Only APPROVED submissions for the
+     * selected month and staff are included.
+     */
+
+    staffRows.forEach(
+        row => {
+
+            const key =
+                row.promo_id
+                    ? String(
+                        row.promo_id
+                    )
+                    : String(
+                        row.promo
+                    );
+
+
+            if (
+                !promotionMap.has(key)
+            ) {
+
+                promotionMap.set(
+                    key,
+                    {
+                        promo:
+                            row.promo,
+
+                        type:
+                            row.type,
+
+                        quantity:
+                            0
+                    }
+                );
+            }
+
+
+            promotionMap.get(
+                key
+            ).quantity +=
+                number(
+                    row.quantity
+                );
+        }
+    );
+
+
+    const body =
+        document.getElementById(
+            "staffBreakdownBody"
+        );
+
+
+    if (
+        !promotionMap.size
+    ) {
+
+        body.innerHTML = `
+            <tr>
+                <td colspan="3"
+                    class="empty">
+                    No approved promotions
+                    for this staff member
+                    in ${escapeHtml(month)}.
+                </td>
+            </tr>
+        `;
+
+    } else {
+
+        body.innerHTML =
+            Array.from(
+                promotionMap.values()
+            )
+            .sort(
+                (a, b) =>
+                    String(a.promo)
+                        .localeCompare(
+                            String(b.promo)
+                        )
+            )
+            .map(
+                item => `
+
+                    <tr>
+
+                        <td>
+                            ${escapeHtml(
+                                item.promo
+                            )}
+                        </td>
+
+                        <td>
+                            ${typeBadge(
+                                item.type
+                            )}
+                        </td>
+
+                        <td>
+                            <strong>
+                                ${item.quantity}
+                            </strong>
+                        </td>
+
+                    </tr>
+
+                `
+            )
+            .join("");
+    }
+
+
+    document.getElementById(
+        "staffBreakdownModal"
+    ).classList.add(
+        "show"
+    );
+}
+
+
+/* =========================================================
+   TOP 3
+========================================================= */
+
+function renderTop3() {
+
+    const month =
+        getSelectedMonth(
+            "top3Month"
+        );
+
+
+    const rows =
+        getMonthRows(
+            month
+        );
+
+
+    let bundlePool =
+        0;
+
+
+    rows.forEach(
+        row => {
+
+            if (
+                String(row.type)
+                    .toLowerCase()
+                    === "outlet_bundle"
+            ) {
+
+                bundlePool +=
+                    row.amount;
+            }
+
+        }
+    );
+
+
+    const staffMap =
+        new Map();
+
+
+    rows.forEach(
+        row => {
+
+            if (
+                String(row.type)
+                    .toLowerCase()
+                    !== "individual"
+            ) {
+
+                return;
+            }
+
+
+            if (
+                !staffMap.has(
+                    row.SMC
+                )
+            ) {
+
+                staffMap.set(
+                    row.SMC,
+                    {
+                        SMC:
+                            row.SMC,
+
+                        staff_name:
+                            row.staff_name,
+
+                        individual:
+                            0
+                    }
+                );
+            }
+
+
+            staffMap.get(
+                row.SMC
+            ).individual +=
+                row.amount;
+        }
+    );
+
+
+    const ranking =
+        Array.from(
+            staffMap.values()
+        )
+        .sort(
+            (a, b) =>
+                b.individual -
+                a.individual
+        )
+        .slice(
+            0,
+            3
+        );
+
+
+    document.getElementById(
+        "top3BundlePool"
+    ).textContent =
+        money(
+            bundlePool
+        );
+
+
+    const shares = [
+        0.50,
+        0.35,
+        0.15
+    ];
+
+
+    for (
+        let i = 0;
+        i < 3;
+        i++
+    ) {
+
+        const staff =
+            ranking[i];
+
+
+        const position =
+            i + 1;
+
+
+        const payout =
+            staff
+                ? bundlePool *
+                    shares[i]
+                : 0;
+
+
+        document.getElementById(
+            `top${position}Name`
+        ).textContent =
+            staff
+                ? staff.staff_name
+                : "-";
+
+
+        document.getElementById(
+            `top${position}Code`
+        ).textContent =
+            staff
+                ? staff.SMC
+                : "-";
+
+
+        document.getElementById(
+            `top${position}Amount`
+        ).textContent =
+            staff
+                ? money(
+                    staff.individual
+                )
+                : "$0.00";
+
+
+        document.getElementById(
+            `top${position}Payout`
+        ).textContent =
+            `Bundle payout: ${money(payout)}`;
+    }
+
+
+    const body =
+        document.getElementById(
+            "top3Body"
+        );
+
+
+    if (
+        !ranking.length
+    ) {
+
+        body.innerHTML = `
+            <tr>
+                <td colspan="6"
+                    class="empty">
+                    No approved individual
+                    submissions for
+                    ${escapeHtml(month)}.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+
+    body.innerHTML =
+        ranking
+            .map(
+                (staff, index) => {
+
+                    const payout =
+                        bundlePool *
+                        shares[index];
+
+
+                    return `
+
+                        <tr>
+
+                            <td>
+                                ${index + 1}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    staff.SMC
+                                )}
+                            </td>
+
+                            <td>
+                                ${escapeHtml(
+                                    staff.staff_name
+                                )}
+                            </td>
+
+                            <td>
+                                ${money(
+                                    staff.individual
+                                )}
+                            </td>
+
+                            <td>
+                                ${shares[index] * 100}%
+                            </td>
+
+                            <td>
+                                ${money(
+                                    payout
+                                )}
+                            </td>
+
+                        </tr>
+
+                    `;
+                }
+            )
+            .join("");
+}
+
+
+/* =========================================================
+   TABS
+========================================================= */
+
+document.querySelectorAll(
+    ".tab-btn"
+).forEach(
+    button => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                const tab =
+                    button.dataset.tab;
+
+
+                currentTab =
+                    tab;
+
+
+                document
+                    .querySelectorAll(
+                        ".tab-btn"
+                    )
+                    .forEach(
+                        btn => {
+
+                            btn.classList.remove(
+                                "active"
+                            );
+
+                        }
+                    );
+
+
+                document
+                    .querySelectorAll(
+                        ".tab-content"
+                    )
+                    .forEach(
+                        content => {
+
+                            content.classList.remove(
+                                "active"
+                            );
+
+                        }
+                    );
+
+
+                button.classList.add(
+                    "active"
+                );
+
+
+                const section =
+                    document.getElementById(
+                        tab
+                    );
+
+
+                if (section) {
+
+                    section.classList.add(
+                        "active"
+                    );
+                }
+
+
+                /*
+                 * No server loading here.
+                 * Existing data is rendered only.
+                 */
+
+                if (
+                    tab === "dashboard"
+                ) {
+
+                    renderDashboard();
+
+                    renderRecentSubmissions();
+
+                } else if (
+                    tab === "submissions"
+                ) {
+
+                    applySubmissionFilters();
+
+                } else if (
+                    tab === "monthly"
+                ) {
+
+                    renderMonthlySummary();
+
+                } else if (
+                    tab === "top3"
+                ) {
+
+                    renderTop3();
+
+                } else if (
+                    tab === "promotions"
+                ) {
+
+                    renderPromotions();
+
+                } else if (
+                    tab === "users"
+                ) {
+
+                    renderUsers();
+                }
+
+            }
+        );
+    }
+);
+
+
+/* =========================================================
+   FILTER EVENTS
+========================================================= */
+
+document.getElementById(
+    "monthlyFilter"
+).addEventListener(
+    "change",
+    () => {
+
+        renderMonthlySummary();
+
+    }
+);
+
+
+document.getElementById(
+    "top3Month"
+).addEventListener(
+    "change",
+    () => {
+
+        renderTop3();
+
+    }
+);
+
+
+document.getElementById(
+    "submissionSearch"
+).addEventListener(
+    "input",
+    () => {
+
+        applySubmissionFilters();
+
+    }
+);
+
+
+/* =========================================================
+   REFRESH
+========================================================= */
+
+async function refreshCurrentTab() {
+
+    await refreshAllData();
+}
+
+
+/* =========================================================
+   MODALS
+========================================================= */
+
+function closeModal(
+    id
+) {
+
+    const modal =
+        document.getElementById(
+            id
+        );
+
+
+    if (modal) {
+
+        modal.classList.remove(
+            "show"
+        );
+    }
+}
+
+
+document.querySelectorAll(
+    ".modal"
+).forEach(
+    modal => {
+
+        modal.addEventListener(
+            "click",
+            event => {
+
+                if (
+                    event.target ===
+                    modal
+                ) {
+
+                    modal.classList.remove(
+                        "show"
+                    );
+                }
+
+            }
+        );
+
+    }
+);
+
+
+/* =========================================================
+   ADMIN INFO
+========================================================= */
+
+async function loadAdminInfo() {
+
+    try {
+
+        const result =
+            await api(
+                "get_current_admin"
+            );
+
+
+        const data =
+            result &&
+            result.data !== undefined
+                ? result.data
+                : result;
+
+
+        const name =
+            pick(
+                data,
+                [
+                    "staff_name",
+                    "name",
+                    "admin_name"
+                ],
+                "Admin"
+            );
+
+
+        const smc =
+            pick(
+                data,
+                [
+                    "sales_man_code",
+                    "SMC",
+                    "smc"
+                ],
+                "-"
+            );
+
+
+        document.getElementById(
+            "adminName"
+        ).textContent =
+            name;
+
+
+        document.getElementById(
+            "adminSMC"
+        ).textContent =
+            smc;
+
+    } catch (error) {
+
+        console.log(
+            "Admin information unavailable:",
+            error.message
+        );
+    }
+}
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+async function logout() {
+
+    try {
+
+        await api(
+            "logout",
+            "POST"
+        );
+
+    } catch (error) {
+
+        console.log(
+            "Logout request:",
+            error.message
+        );
+
+    } finally {
+
+        window.location.href =
+            "index.html";
+    }
+}
+
+
+/* =========================================================
+   INITIAL PAGE LOAD
+========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    async () => {
+
+        const month =
+            getSelectedMonth(
+                "monthlyFilter"
+            );
+
+
+        document.getElementById(
+            "monthlyFilter"
+        ).value =
+            month;
+
+
+        document.getElementById(
+            "top3Month"
+        ).value =
+            month;
+
+
+        await loadInitialData();
+
+    }
+);
+
+</script>
+
+</body>
+</html>
